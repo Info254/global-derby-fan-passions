@@ -9,8 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PassportRouteImport } from './routes/passport'
+import { Route as NationsRouteImport } from './routes/nations'
+import { Route as MatchdayRouteImport } from './routes/matchday'
+import { Route as CirclesRouteImport } from './routes/circles'
 import { Route as IndexRouteImport } from './routes/index'
 
+const PassportRoute = PassportRouteImport.update({
+  id: '/passport',
+  path: '/passport',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NationsRoute = NationsRouteImport.update({
+  id: '/nations',
+  path: '/nations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchdayRoute = MatchdayRouteImport.update({
+  id: '/matchday',
+  path: '/matchday',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CirclesRoute = CirclesRouteImport.update({
+  id: '/circles',
+  path: '/circles',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +43,72 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/circles': typeof CirclesRoute
+  '/matchday': typeof MatchdayRoute
+  '/nations': typeof NationsRoute
+  '/passport': typeof PassportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/circles': typeof CirclesRoute
+  '/matchday': typeof MatchdayRoute
+  '/nations': typeof NationsRoute
+  '/passport': typeof PassportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/circles': typeof CirclesRoute
+  '/matchday': typeof MatchdayRoute
+  '/nations': typeof NationsRoute
+  '/passport': typeof PassportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/circles' | '/matchday' | '/nations' | '/passport'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/circles' | '/matchday' | '/nations' | '/passport'
+  id: '__root__' | '/' | '/circles' | '/matchday' | '/nations' | '/passport'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CirclesRoute: typeof CirclesRoute
+  MatchdayRoute: typeof MatchdayRoute
+  NationsRoute: typeof NationsRoute
+  PassportRoute: typeof PassportRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/passport': {
+      id: '/passport'
+      path: '/passport'
+      fullPath: '/passport'
+      preLoaderRoute: typeof PassportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nations': {
+      id: '/nations'
+      path: '/nations'
+      fullPath: '/nations'
+      preLoaderRoute: typeof NationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matchday': {
+      id: '/matchday'
+      path: '/matchday'
+      fullPath: '/matchday'
+      preLoaderRoute: typeof MatchdayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/circles': {
+      id: '/circles'
+      path: '/circles'
+      fullPath: '/circles'
+      preLoaderRoute: typeof CirclesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +121,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CirclesRoute: CirclesRoute,
+  MatchdayRoute: MatchdayRoute,
+  NationsRoute: NationsRoute,
+  PassportRoute: PassportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
