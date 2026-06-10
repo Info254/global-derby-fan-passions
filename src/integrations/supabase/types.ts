@@ -14,16 +14,232 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      circle_members: {
+        Row: {
+          circle_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "circle_members_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      circles: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          invite_code: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      loyalty_history: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          nation_code: string | null
+          nation_name: string | null
+          note: string | null
+          previous_nation_code: string | null
+          role: Database["public"]["Enums"]["stamp_role"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          nation_code?: string | null
+          nation_name?: string | null
+          note?: string | null
+          previous_nation_code?: string | null
+          role?: Database["public"]["Enums"]["stamp_role"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          nation_code?: string | null
+          nation_name?: string | null
+          note?: string | null
+          previous_nation_code?: string | null
+          role?: Database["public"]["Enums"]["stamp_role"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          primary_nation_code: string | null
+          primary_nation_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id: string
+          primary_nation_code?: string | null
+          primary_nation_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          primary_nation_code?: string | null
+          primary_nation_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reactions: {
+        Row: {
+          circle_id: string
+          created_at: string
+          emoji: string | null
+          id: string
+          kind: Database["public"]["Enums"]["reaction_kind"]
+          match_id: string
+          match_label: string | null
+          minute: number | null
+          text: string | null
+          user_id: string
+        }
+        Insert: {
+          circle_id: string
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["reaction_kind"]
+          match_id: string
+          match_label?: string | null
+          minute?: number | null
+          text?: string | null
+          user_id: string
+        }
+        Update: {
+          circle_id?: string
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["reaction_kind"]
+          match_id?: string
+          match_label?: string | null
+          minute?: number | null
+          text?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactions_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stamps: {
+        Row: {
+          created_at: string
+          id: string
+          nation_code: string
+          nation_name: string
+          note: string | null
+          role: Database["public"]["Enums"]["stamp_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nation_code: string
+          nation_name: string
+          note?: string | null
+          role: Database["public"]["Enums"]["stamp_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nation_code?: string
+          nation_name?: string
+          note?: string | null
+          role?: Database["public"]["Enums"]["stamp_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_circle_member: {
+        Args: { _circle: string; _user: string }
+        Returns: boolean
+      }
+      shares_circle_with: {
+        Args: { _me: string; _other: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      reaction_kind:
+        | "goal"
+        | "miss"
+        | "var"
+        | "red_card"
+        | "elimination"
+        | "penalty"
+        | "assist"
+        | "sub"
+        | "roast"
+        | "hype"
+      stamp_role:
+        | "primary"
+        | "second_home"
+        | "underdog"
+        | "family_pick"
+        | "wildcard"
+        | "bandwagon"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +366,27 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      reaction_kind: [
+        "goal",
+        "miss",
+        "var",
+        "red_card",
+        "elimination",
+        "penalty",
+        "assist",
+        "sub",
+        "roast",
+        "hype",
+      ],
+      stamp_role: [
+        "primary",
+        "second_home",
+        "underdog",
+        "family_pick",
+        "wildcard",
+        "bandwagon",
+      ],
+    },
   },
 } as const
