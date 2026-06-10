@@ -9,30 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PassportRouteImport } from './routes/passport'
 import { Route as NationsRouteImport } from './routes/nations'
-import { Route as MatchdayRouteImport } from './routes/matchday'
-import { Route as CirclesRouteImport } from './routes/circles'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NationsCodeRouteImport } from './routes/nations.$code'
+import { Route as AuthenticatedPassportRouteImport } from './routes/_authenticated/passport'
+import { Route as AuthenticatedMatchdayRouteImport } from './routes/_authenticated/matchday'
+import { Route as AuthenticatedCirclesRouteImport } from './routes/_authenticated/circles'
 
-const PassportRoute = PassportRouteImport.update({
-  id: '/passport',
-  path: '/passport',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NationsRoute = NationsRouteImport.update({
   id: '/nations',
   path: '/nations',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MatchdayRoute = MatchdayRouteImport.update({
-  id: '/matchday',
-  path: '/matchday',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CirclesRoute = CirclesRouteImport.update({
-  id: '/circles',
-  path: '/circles',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -40,54 +37,96 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NationsCodeRoute = NationsCodeRouteImport.update({
+  id: '/$code',
+  path: '/$code',
+  getParentRoute: () => NationsRoute,
+} as any)
+const AuthenticatedPassportRoute = AuthenticatedPassportRouteImport.update({
+  id: '/passport',
+  path: '/passport',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMatchdayRoute = AuthenticatedMatchdayRouteImport.update({
+  id: '/matchday',
+  path: '/matchday',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCirclesRoute = AuthenticatedCirclesRouteImport.update({
+  id: '/circles',
+  path: '/circles',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/circles': typeof CirclesRoute
-  '/matchday': typeof MatchdayRoute
-  '/nations': typeof NationsRoute
-  '/passport': typeof PassportRoute
+  '/auth': typeof AuthRoute
+  '/nations': typeof NationsRouteWithChildren
+  '/circles': typeof AuthenticatedCirclesRoute
+  '/matchday': typeof AuthenticatedMatchdayRoute
+  '/passport': typeof AuthenticatedPassportRoute
+  '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/circles': typeof CirclesRoute
-  '/matchday': typeof MatchdayRoute
-  '/nations': typeof NationsRoute
-  '/passport': typeof PassportRoute
+  '/auth': typeof AuthRoute
+  '/nations': typeof NationsRouteWithChildren
+  '/circles': typeof AuthenticatedCirclesRoute
+  '/matchday': typeof AuthenticatedMatchdayRoute
+  '/passport': typeof AuthenticatedPassportRoute
+  '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/circles': typeof CirclesRoute
-  '/matchday': typeof MatchdayRoute
-  '/nations': typeof NationsRoute
-  '/passport': typeof PassportRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/nations': typeof NationsRouteWithChildren
+  '/_authenticated/circles': typeof AuthenticatedCirclesRoute
+  '/_authenticated/matchday': typeof AuthenticatedMatchdayRoute
+  '/_authenticated/passport': typeof AuthenticatedPassportRoute
+  '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/circles' | '/matchday' | '/nations' | '/passport'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/nations'
+    | '/circles'
+    | '/matchday'
+    | '/passport'
+    | '/nations/$code'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/circles' | '/matchday' | '/nations' | '/passport'
-  id: '__root__' | '/' | '/circles' | '/matchday' | '/nations' | '/passport'
+  to:
+    | '/'
+    | '/auth'
+    | '/nations'
+    | '/circles'
+    | '/matchday'
+    | '/passport'
+    | '/nations/$code'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/nations'
+    | '/_authenticated/circles'
+    | '/_authenticated/matchday'
+    | '/_authenticated/passport'
+    | '/nations/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CirclesRoute: typeof CirclesRoute
-  MatchdayRoute: typeof MatchdayRoute
-  NationsRoute: typeof NationsRoute
-  PassportRoute: typeof PassportRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  NationsRoute: typeof NationsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/passport': {
-      id: '/passport'
-      path: '/passport'
-      fullPath: '/passport'
-      preLoaderRoute: typeof PassportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/nations': {
       id: '/nations'
       path: '/nations'
@@ -95,18 +134,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/matchday': {
-      id: '/matchday'
-      path: '/matchday'
-      fullPath: '/matchday'
-      preLoaderRoute: typeof MatchdayRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/circles': {
-      id: '/circles'
-      path: '/circles'
-      fullPath: '/circles'
-      preLoaderRoute: typeof CirclesRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -116,15 +155,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nations/$code': {
+      id: '/nations/$code'
+      path: '/$code'
+      fullPath: '/nations/$code'
+      preLoaderRoute: typeof NationsCodeRouteImport
+      parentRoute: typeof NationsRoute
+    }
+    '/_authenticated/passport': {
+      id: '/_authenticated/passport'
+      path: '/passport'
+      fullPath: '/passport'
+      preLoaderRoute: typeof AuthenticatedPassportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matchday': {
+      id: '/_authenticated/matchday'
+      path: '/matchday'
+      fullPath: '/matchday'
+      preLoaderRoute: typeof AuthenticatedMatchdayRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/circles': {
+      id: '/_authenticated/circles'
+      path: '/circles'
+      fullPath: '/circles'
+      preLoaderRoute: typeof AuthenticatedCirclesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCirclesRoute: typeof AuthenticatedCirclesRoute
+  AuthenticatedMatchdayRoute: typeof AuthenticatedMatchdayRoute
+  AuthenticatedPassportRoute: typeof AuthenticatedPassportRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCirclesRoute: AuthenticatedCirclesRoute,
+  AuthenticatedMatchdayRoute: AuthenticatedMatchdayRoute,
+  AuthenticatedPassportRoute: AuthenticatedPassportRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface NationsRouteChildren {
+  NationsCodeRoute: typeof NationsCodeRoute
+}
+
+const NationsRouteChildren: NationsRouteChildren = {
+  NationsCodeRoute: NationsCodeRoute,
+}
+
+const NationsRouteWithChildren =
+  NationsRoute._addFileChildren(NationsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CirclesRoute: CirclesRoute,
-  MatchdayRoute: MatchdayRoute,
-  NationsRoute: NationsRoute,
-  PassportRoute: PassportRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  NationsRoute: NationsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
