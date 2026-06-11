@@ -49,6 +49,35 @@ function CirclesPage() {
     if (active) void loadMembers(active.id);
   }, [active]);
 
+  // Auto-join via ?invite=CODE link
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("invite");
+    if (!code) return;
+    void (async () => {
+      const { data: c } = await supabase
+        .from("circles").select("id").eq("invite_code", code.toUpperCase()).maybeSingle();
+      if (c) {
+        await supabase.from("circle_members").insert({ circle_id: c.id, user_id: user.id });
+        window.history.replaceState({}, "", "/circles");
+        void loadCircles();
+      }
+    })();
+  }, [user]);
+
+  async function shareInvite() {
+    if (!active) return;
+    const url = `${window.location.origin}/circles?invite=${active.invite_code}`;
+    const text = `Join my Global Derby circle "${active.name}" for the World Cup. Code: ${active.invite_code}`;
+    if (typeof navigator !== "undefined" && (navigator as Navigator).share) {
+      try { await navigator.share({ title: "Global Derby", text, url }); return; } catch {}
+    }
+    await navigator.clipboard.writeText(`${text}\n${url}`);
+    setError("Invite link copied to clipboard");
+    setTimeout(() => setError(null), 2500);
+  }
+
   async function loadCircles() {
     const { data } = await supabase.from("circles").select("*").order("created_at");
     const list = (data ?? []) as Circle[];
@@ -153,6 +182,13 @@ function CirclesPage() {
                 {members.length} members · Invite code{" "}
                 <span className="font-mono text-gold tracking-widest">{active?.invite_code}</span>
               </p>
+              <button
+                onClick={shareInvite}
+                className="mt-3 inline-flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest px-4 py-2 rounded-full bg-gold text-navy"
+              >
+                📲 Share Invite Link
+              </button>
+              {error && <p className="text-xs text-gold mt-2">{error}</p>}
             </div>
 
             {circles.length > 1 && (

@@ -61,6 +61,7 @@ function MatchdayPage() {
   const [text, setText] = useState("");
   const [minute, setMinute] = useState<string>("1");
   const [showSummary, setShowSummary] = useState(false);
+  const [autoPrompted, setAutoPrompted] = useState<string | null>(null);
   const [filter, setFilter] = useState<"today" | "upcoming" | "all">("today");
 
   useEffect(() => {
@@ -156,6 +157,17 @@ function MatchdayPage() {
     await loadLoyalty();
     setShowSummary(true);
   }
+
+  // Auto-prompt Wrapped when the match ends (finished flag, or 110 min past kickoff)
+  useEffect(() => {
+    if (!match || reactions.length === 0) return;
+    if (autoPrompted === match.id) return;
+    const ended = match.finished || Date.now() - match.kickoff.getTime() > 110 * 60_000;
+    if (ended) {
+      setAutoPrompted(match.id);
+      void openSummary();
+    }
+  }, [match, reactions.length, autoPrompted]);
 
   if (circles.length === 0) {
     return (
