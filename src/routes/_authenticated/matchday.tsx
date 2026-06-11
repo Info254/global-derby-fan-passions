@@ -158,6 +158,17 @@ function MatchdayPage() {
     setShowSummary(true);
   }
 
+  // Auto-prompt Wrapped when the match ends (finished flag, or 110 min past kickoff)
+  useEffect(() => {
+    if (!match || reactions.length === 0) return;
+    if (autoPrompted === match.id) return;
+    const ended = match.finished || Date.now() - match.kickoff.getTime() > 110 * 60_000;
+    if (ended) {
+      setAutoPrompted(match.id);
+      void openSummary();
+    }
+  }, [match, reactions.length, autoPrompted]);
+
   if (circles.length === 0) {
     return (
       <AppShell eyebrow="Matchday Live">
