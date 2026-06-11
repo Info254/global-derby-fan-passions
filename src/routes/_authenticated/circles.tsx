@@ -182,6 +182,13 @@ function CirclesPage() {
                 {members.length} members · Invite code{" "}
                 <span className="font-mono text-gold tracking-widest">{active?.invite_code}</span>
               </p>
+              <button
+                onClick={shareInvite}
+                className="mt-3 inline-flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest px-4 py-2 rounded-full bg-gold text-navy"
+              >
+                📲 Share Invite Link
+              </button>
+              {error && <p className="text-xs text-gold mt-2">{error}</p>}
             </div>
 
             {circles.length > 1 && (
