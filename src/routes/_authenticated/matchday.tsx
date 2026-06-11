@@ -61,6 +61,7 @@ function MatchdayPage() {
   const [text, setText] = useState("");
   const [minute, setMinute] = useState<string>("1");
   const [showSummary, setShowSummary] = useState(false);
+  const [autoPrompted, setAutoPrompted] = useState<string | null>(null);
   const [filter, setFilter] = useState<"today" | "upcoming" | "all">("today");
 
   useEffect(() => {
