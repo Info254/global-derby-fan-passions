@@ -100,6 +100,47 @@ export type Database = {
         }
         Relationships: []
       }
+      points: {
+        Row: {
+          circle_id: string | null
+          created_at: string
+          delta: number
+          id: string
+          match_id: string | null
+          reason: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          circle_id?: string | null
+          created_at?: string
+          delta: number
+          id?: string
+          match_id?: string | null
+          reason?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          circle_id?: string | null
+          created_at?: string
+          delta?: number
+          id?: string
+          match_id?: string | null
+          reason?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -127,6 +168,36 @@ export type Database = {
           primary_nation_code?: string | null
           primary_nation_name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      reaction_templates: {
+        Row: {
+          created_at: string
+          emoji: string | null
+          id: string
+          kind: Database["public"]["Enums"]["reaction_kind"]
+          label: string
+          text: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["reaction_kind"]
+          label: string
+          text?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["reaction_kind"]
+          label?: string
+          text?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -170,6 +241,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reactions_circle_id_fkey"
+            columns: ["circle_id"]
+            isOneToOne: false
+            referencedRelation: "circles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solidarity: {
+        Row: {
+          against_nation_code: string | null
+          against_nation_name: string | null
+          circle_id: string | null
+          created_at: string
+          id: string
+          match_id: string | null
+          note: string | null
+          user_id: string
+          with_nation_code: string
+          with_nation_name: string
+        }
+        Insert: {
+          against_nation_code?: string | null
+          against_nation_name?: string | null
+          circle_id?: string | null
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          note?: string | null
+          user_id: string
+          with_nation_code: string
+          with_nation_name: string
+        }
+        Update: {
+          against_nation_code?: string | null
+          against_nation_name?: string | null
+          circle_id?: string | null
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          note?: string | null
+          user_id?: string
+          with_nation_code?: string
+          with_nation_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solidarity_circle_id_fkey"
             columns: ["circle_id"]
             isOneToOne: false
             referencedRelation: "circles"

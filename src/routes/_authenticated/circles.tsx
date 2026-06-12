@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { getCircleLeaderboard, type LeaderRow } from "@/lib/points";
 
 interface Circle {
   id: string;
@@ -40,13 +41,17 @@ function CirclesPage() {
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [leaders, setLeaders] = useState<LeaderRow[]>([]);
 
   useEffect(() => {
     if (user) void loadCircles();
   }, [user]);
 
   useEffect(() => {
-    if (active) void loadMembers(active.id);
+    if (active) {
+      void loadMembers(active.id);
+      void getCircleLeaderboard(active.id).then(setLeaders);
+    }
   }, [active]);
 
   // Auto-join via ?invite=CODE link
@@ -157,7 +162,7 @@ function CirclesPage() {
               <h1 className="font-display font-extrabold text-3xl uppercase tracking-tighter italic">
                 Start Your Circle
               </h1>
-              <p className="text-sm text-white/60 mt-2">Create a family group or join one with an invite code.</p>
+              <p className="text-sm text-white/60 mt-2">Create one and share the invite code with family & friends — that's how they join.</p>
             </div>
             <form onSubmit={createCircle} className="space-y-2 bg-white/5 border border-white/10 rounded-xl p-4">
               <label className="text-[10px] uppercase tracking-widest text-gold font-bold">Create a Circle</label>
@@ -206,6 +211,34 @@ function CirclesPage() {
                 ))}
               </div>
             )}
+
+            <section className="bg-gradient-to-br from-gold/15 to-stadium/20 border border-gold/30 rounded-2xl p-5 space-y-3">
+              <div className="flex justify-between items-center">
+                <h2 className="font-display font-bold uppercase tracking-tight text-sm">🏆 Leaderboard</h2>
+                <span className="text-[10px] uppercase text-white/50">All-time points</span>
+              </div>
+              {leaders.length === 0 ? (
+                <p className="text-xs text-white/50">No points yet. React in Matchday or stamp a nation to start scoring.</p>
+              ) : (
+                <ol className="space-y-2">
+                  {leaders.map((l, i) => (
+                    <li key={l.user_id} className="flex items-center gap-3 text-sm">
+                      <span className={`w-6 text-center font-display font-extrabold ${i === 0 ? "text-gold" : i === 1 ? "text-silver" : i === 2 ? "text-bronze" : "text-white/40"}`}>
+                        {i + 1}
+                      </span>
+                      <div className="size-8 rounded-full bg-white/10 grid place-items-center text-xs font-bold">
+                        {l.display_name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <span className="flex-1 font-semibold truncate">{l.display_name}</span>
+                      <span className="font-display font-extrabold text-gold tabular-nums">{l.total}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <p className="text-[10px] text-white/40 pt-1 border-t border-white/10">
+                +5 per reaction · +10 stand-with · +20 new stamp · −15 abandoning a stamp
+              </p>
+            </section>
 
             <section className="bg-stadium/20 border border-white/10 rounded-2xl p-5 space-y-4">
               <h2 className="font-display font-bold uppercase tracking-tight text-sm">Support Breakdown</h2>
