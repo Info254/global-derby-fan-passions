@@ -11,11 +11,6 @@ interface Circle {
   invite_code: string;
   created_by: string;
 }
-  id: string;
-  name: string;
-  invite_code: string;
-  created_by: string;
-}
 
 interface Member {
   user_id: string;
