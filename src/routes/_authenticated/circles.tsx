@@ -3,8 +3,14 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { getCircleLeaderboard, type LeaderRow } from "@/lib/points";
 
 interface Circle {
+  id: string;
+  name: string;
+  invite_code: string;
+  created_by: string;
+}
   id: string;
   name: string;
   invite_code: string;
@@ -40,13 +46,17 @@ function CirclesPage() {
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [leaders, setLeaders] = useState<LeaderRow[]>([]);
 
   useEffect(() => {
     if (user) void loadCircles();
   }, [user]);
 
   useEffect(() => {
-    if (active) void loadMembers(active.id);
+    if (active) {
+      void loadMembers(active.id);
+      void getCircleLeaderboard(active.id).then(setLeaders);
+    }
   }, [active]);
 
   // Auto-join via ?invite=CODE link
