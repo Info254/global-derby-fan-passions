@@ -55,6 +55,7 @@ function PassportPage() {
   const [newRole, setNewRole] = useState<StampRole>("primary");
   const [newNationCode, setNewNationCode] = useState<string>(NATIONS[0].code);
   const [profileName, setProfileName] = useState<string>("");
+  const [totalPoints, setTotalPoints] = useState<number>(0);
 
   useEffect(() => {
     if (!user) return;
@@ -68,7 +69,7 @@ function PassportPage() {
   }, [user]);
 
   async function refresh() {
-    const [s, h] = await Promise.all([
+    const [s, h, p] = await Promise.all([
       supabase.from("stamps").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }),
       supabase
         .from("loyalty_history")
@@ -76,9 +77,11 @@ function PassportPage() {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20),
+      supabase.from("points").select("delta").eq("user_id", user!.id),
     ]);
     setStamps((s.data ?? []) as Stamp[]);
     setHistory((h.data ?? []) as HistoryRow[]);
+    setTotalPoints((p.data ?? []).reduce((a, r) => a + (r.delta ?? 0), 0));
   }
 
   async function addStamp(e: React.FormEvent) {
@@ -101,7 +104,11 @@ function PassportPage() {
     void refresh();
   }
 
-  async function removeStamp(id: string) {
+  async function removeStamp(id: string, nationName: string) {
+    const ok = window.confirm(
+      `Remove stamp for ${nationName}?\n\nThis is marked as ABANDONMENT in your loyalty history and costs you 15 points. Stand with your team to the end.`,
+    );
+    if (!ok) return;
     await supabase.from("stamps").delete().eq("id", id);
     void refresh();
   }
@@ -127,9 +134,15 @@ function PassportPage() {
               {profileName || "Fan"}
             </h1>
           </div>
-          <div className="pt-2 border-t border-white/10">
-            <p className="text-[10px] uppercase text-white/40">Tournament</p>
-            <p className="font-display font-bold text-lg">FIFA World Cup 2026</p>
+          <div className="pt-2 border-t border-white/10 flex justify-between">
+            <div>
+              <p className="text-[10px] uppercase text-white/40">Tournament</p>
+              <p className="font-display font-bold text-lg">FIFA World Cup 2026</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase text-white/40">Loyalty Points</p>
+              <p className="font-display font-extrabold text-3xl text-gold tabular-nums">{totalPoints}</p>
+            </div>
           </div>
         </div>
 
@@ -196,7 +209,7 @@ function PassportPage() {
                     Verified<br />Fan
                   </span>
                 </div>
-                <button onClick={() => removeStamp(s.id)} className="text-[10px] text-white/40 hover:text-japan-red">Remove</button>
+                <button onClick={() => removeStamp(s.id, s.nation_name)} className="text-[10px] text-white/40 hover:text-japan-red">Remove (−15)</button>
               </div>
             </div>
           ))}
