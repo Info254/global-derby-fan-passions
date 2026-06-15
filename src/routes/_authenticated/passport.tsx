@@ -157,6 +157,65 @@ function PassportPage() {
           </div>
         </div>
 
+        {path && (
+          <section className="bg-gradient-to-br from-stadium/30 to-navy border border-gold/30 rounded-2xl p-5 space-y-4">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Your Path</p>
+                <h2 className="font-display font-extrabold text-2xl uppercase tracking-tighter italic mt-1">
+                  Group {path.group}
+                </h2>
+              </div>
+              {path.advanced && <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-gold text-navy">Advanced ✓</span>}
+              {path.eliminated && <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-japan-red text-white">Eliminated</span>}
+            </div>
+
+            {path.nextMatch && (
+              <div className="bg-white/5 rounded-xl p-3">
+                <p className="text-[10px] uppercase text-white/40">Next match</p>
+                <p className="font-display font-bold text-base mt-1">
+                  {path.nextMatch.home.flag} {path.nextMatch.home.name_en} vs {path.nextMatch.away.name_en} {path.nextMatch.away.flag}
+                </p>
+                <p className="text-[10px] text-white/60 mt-1">
+                  {path.nextMatch.kickoff.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  {path.nextMatch.stadium?.name_en ? ` · ${path.nextMatch.stadium.name_en}` : ""}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <p className="text-[10px] uppercase text-white/40 mb-2">Group table</p>
+              <div className="space-y-1">
+                {path.table.map((r, i) => (
+                  <div key={r.team.id} className={`flex items-center gap-2 text-xs py-1 px-2 rounded ${path.myRow?.team.id === r.team.id ? "bg-gold/20 border border-gold/40" : ""}`}>
+                    <span className={`w-4 text-center font-bold ${i <= 1 ? "text-gold" : "text-white/40"}`}>{i + 1}</span>
+                    <span className="flex-1 truncate">{r.team.flag} {r.team.name_en}</span>
+                    <span className="text-white/50 tabular-nums w-8 text-right">{r.played}p</span>
+                    <span className="text-white/50 tabular-nums w-8 text-right">{r.gd >= 0 ? `+${r.gd}` : r.gd}</span>
+                    <span className="font-display font-bold text-gold tabular-nums w-6 text-right">{r.points}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {path.rootFor.length > 0 && (
+              <div>
+                <p className="text-[10px] uppercase text-gold font-bold mb-2">🤝 Root for these teams</p>
+                <div className="space-y-2">
+                  {path.rootFor.slice(0, 3).map((r, i) => (
+                    <div key={i} className="bg-white/5 rounded-lg p-2 text-xs">
+                      <p className="font-bold">{r.team.flag} {r.team.name_en}</p>
+                      <p className="text-white/60 mt-0.5">{r.reason}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+
+
         <div className="flex items-center justify-between">
           <h2 className="font-display font-bold uppercase tracking-tight">Allegiance Stamps</h2>
           <button
