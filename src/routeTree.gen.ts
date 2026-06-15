@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as NationsCodeRouteImport } from './routes/nations.$code'
 import { Route as AuthenticatedPassportRouteImport } from './routes/_authenticated/passport'
 import { Route as AuthenticatedMatchdayRouteImport } from './routes/_authenticated/matchday'
+import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCirclesRouteImport } from './routes/_authenticated/circles'
 
 const NationsRoute = NationsRouteImport.update({
@@ -52,6 +53,12 @@ const AuthenticatedMatchdayRoute = AuthenticatedMatchdayRouteImport.update({
   path: '/matchday',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLeaderboardRoute =
+  AuthenticatedLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCirclesRoute = AuthenticatedCirclesRouteImport.update({
   id: '/circles',
   path: '/circles',
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
   '/circles': typeof AuthenticatedCirclesRoute
+  '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
   '/passport': typeof AuthenticatedPassportRoute
   '/nations/$code': typeof NationsCodeRoute
@@ -72,6 +80,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
   '/circles': typeof AuthenticatedCirclesRoute
+  '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
   '/passport': typeof AuthenticatedPassportRoute
   '/nations/$code': typeof NationsCodeRoute
@@ -83,6 +92,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
   '/_authenticated/circles': typeof AuthenticatedCirclesRoute
+  '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/matchday': typeof AuthenticatedMatchdayRoute
   '/_authenticated/passport': typeof AuthenticatedPassportRoute
   '/nations/$code': typeof NationsCodeRoute
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nations'
     | '/circles'
+    | '/leaderboard'
     | '/matchday'
     | '/passport'
     | '/nations/$code'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nations'
     | '/circles'
+    | '/leaderboard'
     | '/matchday'
     | '/passport'
     | '/nations/$code'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/nations'
     | '/_authenticated/circles'
+    | '/_authenticated/leaderboard'
     | '/_authenticated/matchday'
     | '/_authenticated/passport'
     | '/nations/$code'
@@ -176,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchdayRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/leaderboard': {
+      id: '/_authenticated/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/circles': {
       id: '/_authenticated/circles'
       path: '/circles'
@@ -188,12 +208,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCirclesRoute: typeof AuthenticatedCirclesRoute
+  AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedMatchdayRoute: typeof AuthenticatedMatchdayRoute
   AuthenticatedPassportRoute: typeof AuthenticatedPassportRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCirclesRoute: AuthenticatedCirclesRoute,
+  AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedMatchdayRoute: AuthenticatedMatchdayRoute,
   AuthenticatedPassportRoute: AuthenticatedPassportRoute,
 }

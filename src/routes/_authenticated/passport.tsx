@@ -4,6 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { NATIONS } from "@/lib/nations-data";
+import { getWCData, type WCMatch } from "@/lib/wc2026";
+import { getPath, type PathInfo } from "@/lib/standings";
 import type { Database } from "@/integrations/supabase/types";
 
 type StampRole = Database["public"]["Enums"]["stamp_role"];
