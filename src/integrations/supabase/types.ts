@@ -330,6 +330,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_global_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          display_name: string
+          nation_codes: string[]
+          primary_nation_code: string
+          primary_nation_name: string
+          total: number
+          user_id: string
+        }[]
+      }
       is_circle_member: {
         Args: { _circle: string; _user: string }
         Returns: boolean

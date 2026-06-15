@@ -47,3 +47,30 @@ export async function getCircleLeaderboard(circleId: string, matchId?: string): 
     .map((id) => ({ user_id: id, display_name: nameMap.get(id) ?? "Fan", total: totals.get(id) ?? 0 }))
     .sort((a, b) => b.total - a.total);
 }
+
+export interface GlobalLeaderRow extends LeaderRow {
+  primary_nation_code: string | null;
+  primary_nation_name: string | null;
+  nation_codes: string[]; // all stamped nations
+  advanced_count: number; // filled in by page after computing WC standings
+  bonus: number;
+}
+
+export async function getGlobalLeaderboard(limit = 100): Promise<GlobalLeaderRow[]> {
+  const { data, error } = await supabase.rpc("get_global_leaderboard", { _limit: limit });
+  if (error || !data) return [];
+  return (data as Array<{
+    user_id: string; display_name: string;
+    primary_nation_code: string | null; primary_nation_name: string | null;
+    total: number; nation_codes: string[] | null;
+  }>).map((r) => ({
+    user_id: r.user_id,
+    display_name: r.display_name ?? "Fan",
+    total: Number(r.total ?? 0),
+    primary_nation_code: r.primary_nation_code,
+    primary_nation_name: r.primary_nation_name,
+    nation_codes: r.nation_codes ?? [],
+    advanced_count: 0,
+    bonus: 0,
+  }));
+}
