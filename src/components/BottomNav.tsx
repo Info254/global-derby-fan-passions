@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Globe2, Users, BookMarked, Radio } from "lucide-react";
+import { Home, Users, BookMarked, Radio, Trophy } from "lucide-react";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/nations", label: "Nations", icon: Globe2 },
   { to: "/circles", label: "Circles", icon: Users },
+  { to: "/matchday", label: "Live", icon: Radio },
+  { to: "/leaderboard", label: "Ranks", icon: Trophy },
   { to: "/passport", label: "Passport", icon: BookMarked },
-  { to: "/matchday", label: "Matchday", icon: Radio },
 ] as const;
 
 export function BottomNav() {
@@ -20,7 +20,7 @@ export function BottomNav() {
           activeProps={{ className: "active" }}
           activeOptions={{ exact: true }}
         >
-          {label === "Matchday" ? (
+          {label === "Live" ? (
             <span className="relative">
               <Icon className="size-5" />
               <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-japan-red animate-pulse" />
