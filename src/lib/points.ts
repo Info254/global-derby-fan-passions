@@ -47,3 +47,37 @@ export async function getCircleLeaderboard(circleId: string, matchId?: string): 
     .map((id) => ({ user_id: id, display_name: nameMap.get(id) ?? "Fan", total: totals.get(id) ?? 0 }))
     .sort((a, b) => b.total - a.total);
 }
+
+export interface GlobalLeaderRow extends LeaderRow {
+  primary_nation_code: string | null;
+  primary_nation_name: string | null;
+  nation_codes: string[]; // all stamped nations
+  advanced_count: number; // filled in by page after computing WC standings
+  bonus: number;
+}
+
+export async function getGlobalLeaderboard(limit = 100): Promise<GlobalLeaderRow[]> {
+  const [{ data: pts }, { data: profs }, { data: stamps }] = await Promise.all([
+    supabase.from("points").select("user_id, delta"),
+    supabase.from("profiles").select("id, display_name, primary_nation_code, primary_nation_name"),
+    supabase.from("stamps").select("user_id, nation_code"),
+  ]);
+  const totals = new Map<string, number>();
+  for (const r of pts ?? []) totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.delta ?? 0));
+  const stampMap = new Map<string, string[]>();
+  for (const s of stamps ?? []) {
+    if (!stampMap.has(s.user_id)) stampMap.set(s.user_id, []);
+    stampMap.get(s.user_id)!.push(s.nation_code);
+  }
+  const rows: GlobalLeaderRow[] = (profs ?? []).map((p) => ({
+    user_id: p.id,
+    display_name: p.display_name ?? "Fan",
+    total: totals.get(p.id) ?? 0,
+    primary_nation_code: p.primary_nation_code,
+    primary_nation_name: p.primary_nation_name,
+    nation_codes: stampMap.get(p.id) ?? [],
+    advanced_count: 0,
+    bonus: 0,
+  }));
+  return rows.sort((a, b) => b.total - a.total).slice(0, limit);
+}
