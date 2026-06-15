@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { NATIONS } from "@/lib/nations-data";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
 import { getPath, type PathInfo } from "@/lib/standings";
+import { RoadToCup } from "@/components/RoadToCup";
 import type { Database } from "@/integrations/supabase/types";
 
 type StampRole = Database["public"]["Enums"]["stamp_role"];
@@ -59,6 +60,8 @@ function PassportPage() {
   const [profileName, setProfileName] = useState<string>("");
   const [totalPoints, setTotalPoints] = useState<number>(0);
   const [path, setPath] = useState<PathInfo | null>(null);
+  const [allMatches, setAllMatches] = useState<WCMatch[]>([]);
+  const [primaryStamp, setPrimaryStamp] = useState<Stamp | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -87,10 +90,13 @@ function PassportPage() {
     setTotalPoints((p.data ?? []).reduce((a, r) => a + (r.delta ?? 0), 0));
 
     const primary = (s.data ?? []).find((x) => x.role === "primary") as Stamp | undefined;
+    setPrimaryStamp(primary ?? null);
     if (primary) {
       const { matches } = await getWCData();
+      setAllMatches(matches);
       setPath(getPath(matches, primary.nation_code));
     } else {
+      setAllMatches([]);
       setPath(null);
     }
   }
