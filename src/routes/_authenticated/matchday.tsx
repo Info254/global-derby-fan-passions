@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { MatchdaySummaryCard } from "@/components/MatchdaySummaryCard";
+import { VibeMeter } from "@/components/VibeMeter";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
@@ -297,6 +298,8 @@ function MatchdayPage() {
             </select>
           </div>
         </section>
+
+        {match && <VibeMeter matchId={match.id} />}
 
         {/* Solidarity */}
         <section className="bg-gradient-to-r from-gold/20 via-stadium/20 to-japan-red/20 border border-gold/30 rounded-2xl p-4">
