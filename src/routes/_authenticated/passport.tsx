@@ -58,6 +58,7 @@ function PassportPage() {
   const [newNationCode, setNewNationCode] = useState<string>(NATIONS[0].code);
   const [profileName, setProfileName] = useState<string>("");
   const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [path, setPath] = useState<PathInfo | null>(null);
 
   useEffect(() => {
     if (!user) return;
