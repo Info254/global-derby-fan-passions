@@ -163,6 +163,15 @@ function PassportPage() {
           </div>
         </div>
 
+        {primaryStamp && allMatches.length > 0 && (
+          <RoadToCup
+            matches={allMatches}
+            nationCode={primaryStamp.nation_code}
+            nationName={primaryStamp.nation_name}
+            flag={NATIONS.find((n) => n.code === primaryStamp.nation_code)?.flag}
+          />
+        )}
+
         {path && (
           <section className="bg-gradient-to-br from-stadium/30 to-navy border border-gold/30 rounded-2xl p-5 space-y-4">
             <div className="flex justify-between items-start">
