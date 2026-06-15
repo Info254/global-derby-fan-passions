@@ -57,27 +57,20 @@ export interface GlobalLeaderRow extends LeaderRow {
 }
 
 export async function getGlobalLeaderboard(limit = 100): Promise<GlobalLeaderRow[]> {
-  const [{ data: pts }, { data: profs }, { data: stamps }] = await Promise.all([
-    supabase.from("points").select("user_id, delta"),
-    supabase.from("profiles").select("id, display_name, primary_nation_code, primary_nation_name"),
-    supabase.from("stamps").select("user_id, nation_code"),
-  ]);
-  const totals = new Map<string, number>();
-  for (const r of pts ?? []) totals.set(r.user_id, (totals.get(r.user_id) ?? 0) + (r.delta ?? 0));
-  const stampMap = new Map<string, string[]>();
-  for (const s of stamps ?? []) {
-    if (!stampMap.has(s.user_id)) stampMap.set(s.user_id, []);
-    stampMap.get(s.user_id)!.push(s.nation_code);
-  }
-  const rows: GlobalLeaderRow[] = (profs ?? []).map((p) => ({
-    user_id: p.id,
-    display_name: p.display_name ?? "Fan",
-    total: totals.get(p.id) ?? 0,
-    primary_nation_code: p.primary_nation_code,
-    primary_nation_name: p.primary_nation_name,
-    nation_codes: stampMap.get(p.id) ?? [],
+  const { data, error } = await supabase.rpc("get_global_leaderboard", { _limit: limit });
+  if (error || !data) return [];
+  return (data as Array<{
+    user_id: string; display_name: string;
+    primary_nation_code: string | null; primary_nation_name: string | null;
+    total: number; nation_codes: string[] | null;
+  }>).map((r) => ({
+    user_id: r.user_id,
+    display_name: r.display_name ?? "Fan",
+    total: Number(r.total ?? 0),
+    primary_nation_code: r.primary_nation_code,
+    primary_nation_name: r.primary_nation_name,
+    nation_codes: r.nation_codes ?? [],
     advanced_count: 0,
     bonus: 0,
   }));
-  return rows.sort((a, b) => b.total - a.total).slice(0, limit);
 }
