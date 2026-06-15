@@ -85,6 +85,14 @@ function PassportPage() {
     setStamps((s.data ?? []) as Stamp[]);
     setHistory((h.data ?? []) as HistoryRow[]);
     setTotalPoints((p.data ?? []).reduce((a, r) => a + (r.delta ?? 0), 0));
+
+    const primary = (s.data ?? []).find((x) => x.role === "primary") as Stamp | undefined;
+    if (primary) {
+      const { matches } = await getWCData();
+      setPath(getPath(matches, primary.nation_code));
+    } else {
+      setPath(null);
+    }
   }
 
   async function addStamp(e: React.FormEvent) {
