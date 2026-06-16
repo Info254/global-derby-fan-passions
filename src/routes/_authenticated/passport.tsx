@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,9 +7,20 @@ import { NATIONS } from "@/lib/nations-data";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
 import { getPath, type PathInfo } from "@/lib/standings";
 import { RoadToCup } from "@/components/RoadToCup";
+import { Flag } from "@/components/Flag";
+import { playCheer, playGroan } from "@/lib/sounds";
 import type { Database } from "@/integrations/supabase/types";
 
 type StampRole = Database["public"]["Enums"]["stamp_role"];
+
+interface PointRow {
+  id: string;
+  delta: number;
+  source: string;
+  reason: string | null;
+  match_id: string | null;
+  created_at: string;
+}
 
 const ROLE_META: Record<StampRole, { label: string; color: string }> = {
   primary: { label: "Primary Hope", color: "border-japan-red" },
@@ -59,6 +70,7 @@ function PassportPage() {
   const [newNationCode, setNewNationCode] = useState<string>(NATIONS[0].code);
   const [profileName, setProfileName] = useState<string>("");
   const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [pointRows, setPointRows] = useState<PointRow[]>([]);
   const [path, setPath] = useState<PathInfo | null>(null);
   const [allMatches, setAllMatches] = useState<WCMatch[]>([]);
   const [primaryStamp, setPrimaryStamp] = useState<Stamp | null>(null);
@@ -72,6 +84,21 @@ function PassportPage() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfileName(data?.display_name ?? "Fan"));
+
+    const ch = supabase
+      .channel(`points-self-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "points", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const delta = (payload.new as { delta?: number })?.delta ?? 0;
+          if (delta > 0) playCheer();
+          else if (delta < 0) playGroan();
+          void refresh();
+        },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
   }, [user]);
 
   async function refresh() {
@@ -83,11 +110,17 @@ function PassportPage() {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20),
-      supabase.from("points").select("delta").eq("user_id", user!.id),
+      supabase
+        .from("points")
+        .select("id, delta, source, reason, match_id, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: true }),
     ]);
     setStamps((s.data ?? []) as Stamp[]);
     setHistory((h.data ?? []) as HistoryRow[]);
-    setTotalPoints((p.data ?? []).reduce((a, r) => a + (r.delta ?? 0), 0));
+    const rows = (p.data ?? []) as PointRow[];
+    setPointRows(rows);
+    setTotalPoints(rows.reduce((a, r) => a + (r.delta ?? 0), 0));
 
     const primary = (s.data ?? []).find((x) => x.role === "primary") as Stamp | undefined;
     setPrimaryStamp(primary ?? null);
@@ -100,6 +133,32 @@ function PassportPage() {
       setPath(null);
     }
   }
+
+  const matchById = useMemo(() => new Map(allMatches.map((m) => [m.id, m])), [allMatches]);
+  const timeline = useMemo(() => {
+    // Group point rows by match_id (or "general" for non-match), keep cumulative running total.
+    let running = 0;
+    const out: { key: string; match?: WCMatch; rows: PointRow[]; sum: number; cumulative: number; date: string }[] = [];
+    const groups = new Map<string, PointRow[]>();
+    for (const r of pointRows) {
+      const k = r.match_id ?? `gen-${r.created_at.slice(0, 10)}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    for (const [k, rows] of groups) {
+      const sum = rows.reduce((a, r) => a + r.delta, 0);
+      running += sum;
+      out.push({
+        key: k,
+        match: matchById.get(k),
+        rows,
+        sum,
+        cumulative: running,
+        date: rows[0].created_at,
+      });
+    }
+    return out.reverse();
+  }, [pointRows, matchById]);
 
   async function addStamp(e: React.FormEvent) {
     e.preventDefault();
@@ -169,7 +228,73 @@ function PassportPage() {
             nationCode={primaryStamp.nation_code}
             nationName={primaryStamp.nation_name}
             flag={NATIONS.find((n) => n.code === primaryStamp.nation_code)?.flag}
+            points={totalPoints}
           />
+        )}
+
+        {timeline.length > 0 && (
+          <section className="bg-gradient-to-br from-stadium/20 to-navy border border-gold/30 rounded-2xl p-5 space-y-3">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Points Timeline</p>
+                <h2 className="font-display font-extrabold text-xl uppercase tracking-tighter italic mt-1">Match by Match</h2>
+              </div>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider">Live</p>
+            </div>
+            <ol className="space-y-2">
+              {timeline.slice(0, 20).map((t) => {
+                const positive = t.sum >= 0;
+                return (
+                  <li key={t.key} className="bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        {t.match ? (
+                          <p className="font-display font-bold text-sm truncate flex items-center gap-1">
+                            <Flag src={t.match.home.flag} alt={t.match.home.name_en} size={16} />
+                            {t.match.home.name_en}
+                            <span className="text-white/40 mx-1">vs</span>
+                            <Flag src={t.match.away.flag} alt={t.match.away.name_en} size={16} />
+                            {t.match.away.name_en}
+                          </p>
+                        ) : (
+                          <p className="font-display font-bold text-sm">General Activity</p>
+                        )}
+                        <p className="text-[10px] text-white/50 mt-0.5">
+                          {t.match?.finished && t.match.homeScore != null
+                            ? `Final ${t.match.homeScore}–${t.match.awayScore} · `
+                            : ""}
+                          {new Date(t.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                          {" · "}{t.rows.length} {t.rows.length === 1 ? "event" : "events"}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className={`font-display font-extrabold tabular-nums ${positive ? "text-gold" : "text-japan-red"}`}>
+                          {positive ? "+" : ""}{t.sum}
+                        </p>
+                        <p className="text-[10px] text-white/40 tabular-nums">Total {t.cumulative}</p>
+                      </div>
+                    </div>
+                    <ul className="mt-2 space-y-0.5">
+                      {t.rows.slice(0, 4).map((r) => (
+                        <li key={r.id} className="text-[10px] text-white/60 flex justify-between">
+                          <span className="truncate">
+                            <span className="uppercase tracking-wider text-white/40">{r.source}</span>
+                            {r.reason ? ` · ${r.reason}` : ""}
+                          </span>
+                          <span className={`tabular-nums ${r.delta >= 0 ? "text-gold/80" : "text-japan-red/80"}`}>
+                            {r.delta >= 0 ? "+" : ""}{r.delta}
+                          </span>
+                        </li>
+                      ))}
+                      {t.rows.length > 4 && (
+                        <li className="text-[10px] text-white/30">+{t.rows.length - 4} more events…</li>
+                      )}
+                    </ul>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
         )}
 
         {path && (
@@ -188,8 +313,12 @@ function PassportPage() {
             {path.nextMatch && (
               <div className="bg-white/5 rounded-xl p-3">
                 <p className="text-[10px] uppercase text-white/40">Next match</p>
-                <p className="font-display font-bold text-base mt-1">
-                  {path.nextMatch.home.flag} {path.nextMatch.home.name_en} vs {path.nextMatch.away.name_en} {path.nextMatch.away.flag}
+                <p className="font-display font-bold text-base mt-1 flex items-center gap-1 flex-wrap">
+                  <Flag src={path.nextMatch.home.flag} alt={path.nextMatch.home.name_en} size={18} />
+                  {path.nextMatch.home.name_en}
+                  <span className="text-white/40 mx-1">vs</span>
+                  <Flag src={path.nextMatch.away.flag} alt={path.nextMatch.away.name_en} size={18} />
+                  {path.nextMatch.away.name_en}
                 </p>
                 <p className="text-[10px] text-white/60 mt-1">
                   {path.nextMatch.kickoff.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -204,7 +333,10 @@ function PassportPage() {
                 {path.table.map((r, i) => (
                   <div key={r.team.id} className={`flex items-center gap-2 text-xs py-1 px-2 rounded ${path.myRow?.team.id === r.team.id ? "bg-gold/20 border border-gold/40" : ""}`}>
                     <span className={`w-4 text-center font-bold ${i <= 1 ? "text-gold" : "text-white/40"}`}>{i + 1}</span>
-                    <span className="flex-1 truncate">{r.team.flag} {r.team.name_en}</span>
+                    <span className="flex-1 truncate flex items-center gap-1">
+                      <Flag src={r.team.flag} alt={r.team.name_en} size={14} />
+                      {r.team.name_en}
+                    </span>
                     <span className="text-white/50 tabular-nums w-8 text-right">{r.played}p</span>
                     <span className="text-white/50 tabular-nums w-8 text-right">{r.gd >= 0 ? `+${r.gd}` : r.gd}</span>
                     <span className="font-display font-bold text-gold tabular-nums w-6 text-right">{r.points}</span>
@@ -219,7 +351,7 @@ function PassportPage() {
                 <div className="space-y-2">
                   {path.rootFor.slice(0, 3).map((r, i) => (
                     <div key={i} className="bg-white/5 rounded-lg p-2 text-xs">
-                      <p className="font-bold">{r.team.flag} {r.team.name_en}</p>
+                      <p className="font-bold flex items-center gap-1"><Flag src={r.team.flag} alt={r.team.name_en} size={14} /> {r.team.name_en}</p>
                       <p className="text-white/60 mt-0.5">{r.reason}</p>
                     </div>
                   ))}
