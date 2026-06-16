@@ -4,6 +4,7 @@ import { BottomNav } from "./BottomNav";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import appIcon from "@/assets/app-icon.png";
+import stadiumBg from "@/assets/stadium-bg.jpg";
 
 export function AppShell({
   children,
