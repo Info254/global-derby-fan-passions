@@ -351,7 +351,7 @@ function PassportPage() {
                 <div className="space-y-2">
                   {path.rootFor.slice(0, 3).map((r, i) => (
                     <div key={i} className="bg-white/5 rounded-lg p-2 text-xs">
-                      <p className="font-bold">{r.team.flag} {r.team.name_en}</p>
+                      <p className="font-bold flex items-center gap-1"><Flag src={r.team.flag} alt={r.team.name_en} size={14} /> {r.team.name_en}</p>
                       <p className="text-white/60 mt-0.5">{r.reason}</p>
                     </div>
                   ))}
