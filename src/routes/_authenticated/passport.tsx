@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,9 +7,20 @@ import { NATIONS } from "@/lib/nations-data";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
 import { getPath, type PathInfo } from "@/lib/standings";
 import { RoadToCup } from "@/components/RoadToCup";
+import { Flag } from "@/components/Flag";
+import { playCheer, playGroan } from "@/lib/sounds";
 import type { Database } from "@/integrations/supabase/types";
 
 type StampRole = Database["public"]["Enums"]["stamp_role"];
+
+interface PointRow {
+  id: string;
+  delta: number;
+  source: string;
+  reason: string | null;
+  match_id: string | null;
+  created_at: string;
+}
 
 const ROLE_META: Record<StampRole, { label: string; color: string }> = {
   primary: { label: "Primary Hope", color: "border-japan-red" },
@@ -59,6 +70,7 @@ function PassportPage() {
   const [newNationCode, setNewNationCode] = useState<string>(NATIONS[0].code);
   const [profileName, setProfileName] = useState<string>("");
   const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [pointRows, setPointRows] = useState<PointRow[]>([]);
   const [path, setPath] = useState<PathInfo | null>(null);
   const [allMatches, setAllMatches] = useState<WCMatch[]>([]);
   const [primaryStamp, setPrimaryStamp] = useState<Stamp | null>(null);
@@ -72,6 +84,21 @@ function PassportPage() {
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfileName(data?.display_name ?? "Fan"));
+
+    const ch = supabase
+      .channel(`points-self-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "points", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const delta = (payload.new as { delta?: number })?.delta ?? 0;
+          if (delta > 0) playCheer();
+          else if (delta < 0) playGroan();
+          void refresh();
+        },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
   }, [user]);
 
   async function refresh() {
@@ -83,11 +110,17 @@ function PassportPage() {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20),
-      supabase.from("points").select("delta").eq("user_id", user!.id),
+      supabase
+        .from("points")
+        .select("id, delta, source, reason, match_id, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: true }),
     ]);
     setStamps((s.data ?? []) as Stamp[]);
     setHistory((h.data ?? []) as HistoryRow[]);
-    setTotalPoints((p.data ?? []).reduce((a, r) => a + (r.delta ?? 0), 0));
+    const rows = (p.data ?? []) as PointRow[];
+    setPointRows(rows);
+    setTotalPoints(rows.reduce((a, r) => a + (r.delta ?? 0), 0));
 
     const primary = (s.data ?? []).find((x) => x.role === "primary") as Stamp | undefined;
     setPrimaryStamp(primary ?? null);
@@ -100,6 +133,32 @@ function PassportPage() {
       setPath(null);
     }
   }
+
+  const matchById = useMemo(() => new Map(allMatches.map((m) => [m.id, m])), [allMatches]);
+  const timeline = useMemo(() => {
+    // Group point rows by match_id (or "general" for non-match), keep cumulative running total.
+    let running = 0;
+    const out: { key: string; match?: WCMatch; rows: PointRow[]; sum: number; cumulative: number; date: string }[] = [];
+    const groups = new Map<string, PointRow[]>();
+    for (const r of pointRows) {
+      const k = r.match_id ?? `gen-${r.created_at.slice(0, 10)}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    for (const [k, rows] of groups) {
+      const sum = rows.reduce((a, r) => a + r.delta, 0);
+      running += sum;
+      out.push({
+        key: k,
+        match: matchById.get(k),
+        rows,
+        sum,
+        cumulative: running,
+        date: rows[0].created_at,
+      });
+    }
+    return out.reverse();
+  }, [pointRows, matchById]);
 
   async function addStamp(e: React.FormEvent) {
     e.preventDefault();
