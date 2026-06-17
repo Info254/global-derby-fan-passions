@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NationsCodeRouteImport } from './routes/nations.$code'
+import { Route as AuthenticatedProgressRouteImport } from './routes/_authenticated/progress'
 import { Route as AuthenticatedPassportRouteImport } from './routes/_authenticated/passport'
 import { Route as AuthenticatedMatchdayRouteImport } from './routes/_authenticated/matchday'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
@@ -42,6 +43,11 @@ const NationsCodeRoute = NationsCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
   getParentRoute: () => NationsRoute,
+} as any)
+const AuthenticatedProgressRoute = AuthenticatedProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPassportRoute = AuthenticatedPassportRouteImport.update({
   id: '/passport',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
   '/passport': typeof AuthenticatedPassportRoute
+  '/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRoutesByTo {
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
   '/passport': typeof AuthenticatedPassportRoute
+  '/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRoutesById {
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/matchday': typeof AuthenticatedMatchdayRoute
   '/_authenticated/passport': typeof AuthenticatedPassportRoute
+  '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
 }
 export interface FileRouteTypes {
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/matchday'
     | '/passport'
+    | '/progress'
     | '/nations/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/matchday'
     | '/passport'
+    | '/progress'
     | '/nations/$code'
   id:
     | '__root__'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leaderboard'
     | '/_authenticated/matchday'
     | '/_authenticated/passport'
+    | '/_authenticated/progress'
     | '/nations/$code'
   fileRoutesById: FileRoutesById
 }
@@ -175,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NationsCodeRouteImport
       parentRoute: typeof NationsRoute
     }
+    '/_authenticated/progress': {
+      id: '/_authenticated/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AuthenticatedProgressRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/passport': {
       id: '/_authenticated/passport'
       path: '/passport'
@@ -211,6 +230,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedMatchdayRoute: typeof AuthenticatedMatchdayRoute
   AuthenticatedPassportRoute: typeof AuthenticatedPassportRoute
+  AuthenticatedProgressRoute: typeof AuthenticatedProgressRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -218,6 +238,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedMatchdayRoute: AuthenticatedMatchdayRoute,
   AuthenticatedPassportRoute: AuthenticatedPassportRoute,
+  AuthenticatedProgressRoute: AuthenticatedProgressRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

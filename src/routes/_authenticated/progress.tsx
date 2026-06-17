@@ -175,9 +175,9 @@ function ProgressPage() {
                             <span className="truncate max-w-[90px]">{row.team.name_en}</span>
                           </td>
                           <td className="text-center tabular-nums">{row.played}</td>
-                          <td className="text-center tabular-nums">{row.won}</td>
-                          <td className="text-center tabular-nums">{row.drawn}</td>
-                          <td className="text-center tabular-nums">{row.lost}</td>
+                          <td className="text-center tabular-nums">{row.wins}</td>
+                          <td className="text-center tabular-nums">{row.draws}</td>
+                          <td className="text-center tabular-nums">{row.losses}</td>
                           <td className="text-center tabular-nums">{row.gd > 0 ? "+" : ""}{row.gd}</td>
                           <td className="text-center font-bold text-gold tabular-nums">{row.points}</td>
                         </tr>
