@@ -33,10 +33,11 @@ export function AppShell({
     <div className="relative min-h-screen bg-navy text-white font-sans pb-28 overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.18] bg-no-repeat bg-cover bg-center"
+        className="pointer-events-none fixed inset-0 -z-10 opacity-[0.35] bg-no-repeat bg-cover bg-center"
         style={{ backgroundImage: `url(${stadiumBg})` }}
       />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-navy/70 via-navy/85 to-navy" />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-navy/55 via-navy/75 to-navy" />
+      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 [background-image:repeating-linear-gradient(180deg,transparent_0_28px,rgba(255,255,255,0.02)_28px_29px)]" />
       <header className="relative px-6 pt-8 pb-4 flex justify-between items-center border-b border-white/10 backdrop-blur-sm bg-navy/30">
         <Link to="/" className="flex items-center gap-2">
           <img src={appIcon} alt="Global Derby" className="size-9 rounded-lg" width={36} height={36} />

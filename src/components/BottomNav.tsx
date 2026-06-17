@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Home, Users, BookMarked, Radio, Trophy } from "lucide-react";
+import { Home, Users, Radio, Trophy, Activity } from "lucide-react";
 
 const tabs = [
   { to: "/", label: "Home", icon: Home },
   { to: "/circles", label: "Circles", icon: Users },
   { to: "/matchday", label: "Live", icon: Radio },
+  { to: "/progress", label: "Progress", icon: Activity },
   { to: "/leaderboard", label: "Ranks", icon: Trophy },
-  { to: "/passport", label: "Passport", icon: BookMarked },
 ] as const;
 
 export function BottomNav() {
