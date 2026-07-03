@@ -258,8 +258,12 @@ function MatchdayPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-japan-red animate-pulse" />
-            <p className="text-[10px] uppercase tracking-[0.3em] text-japan-red font-bold">FIFA WC 2026 · {minute}'</p>
+            <span className={`size-2 rounded-full ${liveInfo && !["NS","TBD","PST","CANC"].includes(liveInfo.status) ? "bg-japan-red animate-pulse" : "bg-white/30"}`} />
+            <p className="text-[10px] uppercase tracking-[0.3em] text-japan-red font-bold">
+              {liveInfo
+                ? `FIFA WC 2026 · ${liveInfo.status}${liveInfo.minute ? ` ${liveInfo.minute}'` : ""}`
+                : liveLoading ? "Loading live scores…" : `FIFA WC 2026 · ${minute}'`}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-[9px] uppercase tracking-widest text-white/40">Match Points</p>
