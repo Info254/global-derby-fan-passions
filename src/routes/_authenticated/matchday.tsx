@@ -287,7 +287,7 @@ function MatchdayPage() {
 
           <select
             value={match?.id ?? ""}
-            onChange={(e) => setMatch(matches.find((m) => m.id === e.target.value) ?? null)}
+            onChange={(e) => setMatch(mergedMatches.find((m) => m.id === e.target.value) ?? null)}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm"
           >
             {visibleMatches.length === 0 && <option value="">No matches in this view</option>}
