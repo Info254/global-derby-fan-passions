@@ -24,13 +24,15 @@ interface MyPoint { delta: number; match_id: string | null; reason: string; }
 
 function ProgressPage() {
   const { user } = useAuth();
-  const [matches, setMatches] = useState<WCMatch[]>([]);
+  const [rawMatches, setRawMatches] = useState<WCMatch[]>([]);
   const [stamps, setStamps] = useState<MyStamp[]>([]);
   const [points, setPoints] = useState<MyPoint[]>([]);
   const [filter, setFilter] = useState<"all" | "mine">("mine");
+  const { live } = useLiveScores();
+  const matches = useMemo(() => mergeLive(rawMatches, live), [rawMatches, live]);
 
   useEffect(() => {
-    void getWCData().then((d) => setMatches(d.matches));
+    void getWCData().then((d) => setRawMatches(d.matches));
   }, []);
 
   useEffect(() => {
