@@ -43,8 +43,10 @@ export function useLiveScores(): { live: LiveFixture[]; loading: boolean } {
       }
     }
     void tick();
-    const t = setInterval(tick, 60_000);
+    // Refresh once per 24 hours to keep API costs down.
+    const t = setInterval(tick, 24 * 60 * 60 * 1000);
     return () => { cancelled = true; clearInterval(t); };
+
   }, [call]);
 
   return { live, loading };

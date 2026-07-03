@@ -13,7 +13,7 @@ export interface LiveFixture {
 }
 
 let CACHE: { ts: number; data: LiveFixture[] } | null = null;
-const TTL = 60_000; // 1 min
+const TTL = 24 * 60 * 60 * 1000; // 24h
 
 export const getLiveScores = createServerFn({ method: "GET" }).handler(
   async (): Promise<LiveFixture[]> => {
