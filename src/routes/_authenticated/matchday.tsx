@@ -77,6 +77,7 @@ function MatchdayPage() {
   const [editingTpl, setEditingTpl] = useState(false);
   const [matchPoints, setMatchPoints] = useState<number>(0);
   const [showSolidarity, setShowSolidarity] = useState(false);
+  const { live, loading: liveLoading } = useLiveScores();
 
   useEffect(() => {
     supabase.from("circles").select("id, name").then(({ data }) => {
@@ -86,10 +87,31 @@ function MatchdayPage() {
     });
     getWCData().then(({ matches }) => {
       setMatches(matches);
-      const live = matches.find((m) => !m.finished);
-      setMatch(live ?? matches[0] ?? null);
     });
   }, []);
+
+  // Merge live scores into fixtures whenever either changes.
+  const mergedMatches = useMemo(() => mergeLive(matches, live), [matches, live]);
+
+  // Pick a default match: prefer an in-progress one, else next upcoming.
+  useEffect(() => {
+    if (match || mergedMatches.length === 0) return;
+    const now = Date.now();
+    const inPlay = mergedMatches.find((m) => !m.finished && m.kickoff.getTime() <= now);
+    const next = mergedMatches.find((m) => m.kickoff.getTime() >= now);
+    setMatch(inPlay ?? next ?? mergedMatches[0]);
+  }, [mergedMatches, match]);
+
+  // Keep the currently-selected match's score fresh from live data.
+  useEffect(() => {
+    if (!match) return;
+    const updated = mergedMatches.find((m) => m.id === match.id);
+    if (updated && (updated.homeScore !== match.homeScore || updated.awayScore !== match.awayScore || updated.finished !== match.finished)) {
+      setMatch(updated);
+    }
+  }, [mergedMatches, match]);
+
+  const liveInfo = liveStatusFor(match, live);
 
   // Load templates (or seed defaults the first time)
   useEffect(() => {
