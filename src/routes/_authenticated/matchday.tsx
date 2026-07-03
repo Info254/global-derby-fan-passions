@@ -6,6 +6,7 @@ import { VibeMeter } from "@/components/VibeMeter";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
+import { useLiveScores, mergeLive, liveStatusFor } from "@/lib/live-merge";
 import { NATIONS } from "@/lib/nations-data";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -76,6 +77,7 @@ function MatchdayPage() {
   const [editingTpl, setEditingTpl] = useState(false);
   const [matchPoints, setMatchPoints] = useState<number>(0);
   const [showSolidarity, setShowSolidarity] = useState(false);
+  const { live, loading: liveLoading } = useLiveScores();
 
   useEffect(() => {
     supabase.from("circles").select("id, name").then(({ data }) => {
@@ -85,10 +87,31 @@ function MatchdayPage() {
     });
     getWCData().then(({ matches }) => {
       setMatches(matches);
-      const live = matches.find((m) => !m.finished);
-      setMatch(live ?? matches[0] ?? null);
     });
   }, []);
+
+  // Merge live scores into fixtures whenever either changes.
+  const mergedMatches = useMemo(() => mergeLive(matches, live), [matches, live]);
+
+  // Pick a default match: prefer an in-progress one, else next upcoming.
+  useEffect(() => {
+    if (match || mergedMatches.length === 0) return;
+    const now = Date.now();
+    const inPlay = mergedMatches.find((m) => !m.finished && m.kickoff.getTime() <= now);
+    const next = mergedMatches.find((m) => m.kickoff.getTime() >= now);
+    setMatch(inPlay ?? next ?? mergedMatches[0]);
+  }, [mergedMatches, match]);
+
+  // Keep the currently-selected match's score fresh from live data.
+  useEffect(() => {
+    if (!match) return;
+    const updated = mergedMatches.find((m) => m.id === match.id);
+    if (updated && (updated.homeScore !== match.homeScore || updated.awayScore !== match.awayScore || updated.finished !== match.finished)) {
+      setMatch(updated);
+    }
+  }, [mergedMatches, match]);
+
+  const liveInfo = liveStatusFor(match, live);
 
   // Load templates (or seed defaults the first time)
   useEffect(() => {
@@ -113,10 +136,10 @@ function MatchdayPage() {
     const now = Date.now();
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
-    if (filter === "today") return matches.filter((m) => m.kickoff >= start && m.kickoff < end);
-    if (filter === "upcoming") return matches.filter((m) => m.kickoff.getTime() >= now).slice(0, 30);
-    return matches.slice(0, 60);
-  }, [matches, filter]);
+    if (filter === "today") return mergedMatches.filter((m) => m.kickoff >= start && m.kickoff < end);
+    if (filter === "upcoming") return mergedMatches.filter((m) => m.kickoff.getTime() >= now).slice(0, 30);
+    return mergedMatches.slice(0, 60);
+  }, [mergedMatches, filter]);
 
   useEffect(() => {
     if (!circleId || !match) return;
@@ -235,8 +258,12 @@ function MatchdayPage() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-japan-red animate-pulse" />
-            <p className="text-[10px] uppercase tracking-[0.3em] text-japan-red font-bold">FIFA WC 2026 · {minute}'</p>
+            <span className={`size-2 rounded-full ${liveInfo && !["NS","TBD","PST","CANC"].includes(liveInfo.status) ? "bg-japan-red animate-pulse" : "bg-white/30"}`} />
+            <p className="text-[10px] uppercase tracking-[0.3em] text-japan-red font-bold">
+              {liveInfo
+                ? `FIFA WC 2026 · ${liveInfo.status}${liveInfo.minute ? ` ${liveInfo.minute}'` : ""}`
+                : liveLoading ? "Loading live scores…" : `FIFA WC 2026 · ${minute}'`}
+            </p>
           </div>
           <div className="text-right">
             <p className="text-[9px] uppercase tracking-widest text-white/40">Match Points</p>
@@ -260,7 +287,7 @@ function MatchdayPage() {
 
           <select
             value={match?.id ?? ""}
-            onChange={(e) => setMatch(matches.find((m) => m.id === e.target.value) ?? null)}
+            onChange={(e) => setMatch(mergedMatches.find((m) => m.id === e.target.value) ?? null)}
             className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm"
           >
             {visibleMatches.length === 0 && <option value="">No matches in this view</option>}
