@@ -136,10 +136,10 @@ function MatchdayPage() {
     const now = Date.now();
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date(start); end.setDate(end.getDate() + 1);
-    if (filter === "today") return matches.filter((m) => m.kickoff >= start && m.kickoff < end);
-    if (filter === "upcoming") return matches.filter((m) => m.kickoff.getTime() >= now).slice(0, 30);
-    return matches.slice(0, 60);
-  }, [matches, filter]);
+    if (filter === "today") return mergedMatches.filter((m) => m.kickoff >= start && m.kickoff < end);
+    if (filter === "upcoming") return mergedMatches.filter((m) => m.kickoff.getTime() >= now).slice(0, 30);
+    return mergedMatches.slice(0, 60);
+  }, [mergedMatches, filter]);
 
   useEffect(() => {
     if (!circleId || !match) return;
