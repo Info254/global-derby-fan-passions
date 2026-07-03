@@ -5,6 +5,7 @@ import { Flag } from "@/components/Flag";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getWCData, groupMatchesByDay, type WCMatch } from "@/lib/wc2026";
+import { useLiveScores, mergeLive } from "@/lib/live-merge";
 import { computeGroupTable } from "@/lib/standings";
 import { getStars } from "@/lib/top-players";
 
