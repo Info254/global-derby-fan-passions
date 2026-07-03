@@ -6,6 +6,7 @@ import { VibeMeter } from "@/components/VibeMeter";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
+import { useLiveScores, mergeLive, liveStatusFor } from "@/lib/live-merge";
 import { NATIONS } from "@/lib/nations-data";
 import type { Database } from "@/integrations/supabase/types";
 
