@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as NationsRouteImport } from './routes/nations'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -20,6 +21,11 @@ import { Route as AuthenticatedMatchdayRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCirclesRouteImport } from './routes/_authenticated/circles'
 
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NationsRoute = NationsRouteImport.update({
   id: '/nations',
   path: '/nations',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/circles': typeof AuthenticatedCirclesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/circles': typeof AuthenticatedCirclesRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matchday': typeof AuthenticatedMatchdayRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/nations': typeof NationsRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/_authenticated/circles': typeof AuthenticatedCirclesRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/matchday': typeof AuthenticatedMatchdayRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/nations'
+    | '/privacy'
     | '/circles'
     | '/leaderboard'
     | '/matchday'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/nations'
+    | '/privacy'
     | '/circles'
     | '/leaderboard'
     | '/matchday'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/nations'
+    | '/privacy'
     | '/_authenticated/circles'
     | '/_authenticated/leaderboard'
     | '/_authenticated/matchday'
@@ -148,10 +160,18 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   NationsRoute: typeof NationsRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/nations': {
       id: '/nations'
       path: '/nations'
@@ -260,6 +280,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   NationsRoute: NationsRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
