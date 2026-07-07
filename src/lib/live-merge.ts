@@ -63,6 +63,10 @@ export function mergeLive(matches: WCMatch[], live: LiveFixture[]): WCMatch[] {
     const f = idx.get(key);
     if (!f) return m;
     const finished = ["FT", "AET", "PEN"].includes(f.status);
+    const live = ["1H", "2H", "HT", "ET", "P", "LIVE"].includes(f.status);
+    // Only overwrite scores when the match has actually started; ignore NS/TBD/PST so
+    // future fixtures don't appear as fake "0-0".
+    if (!finished && !live) return m;
     return {
       ...m,
       homeScore: f.homeScore,
