@@ -48,7 +48,77 @@ export interface WCMatch {
   awayScore: number | null;
   stadium?: WCStadium;
   label: string;
+  source?: string;
 }
+
+interface VerifiedResult {
+  id: string;
+  type: string;
+  group: string;
+  matchday: number;
+  kickoff: string;
+  homeCode: string;
+  awayCode: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  finished: boolean;
+  stadiumId?: string;
+  source: string;
+}
+
+const VERIFIED_RESULTS: VerifiedResult[] = [
+  {
+    id: "101",
+    type: "sf",
+    group: "SF",
+    matchday: 7,
+    kickoff: "2026-07-14T21:00:00Z",
+    homeCode: "FRA",
+    awayCode: "ESP",
+    homeScore: 0,
+    awayScore: 2,
+    finished: true,
+    stadiumId: "4",
+    source: "ESPN/BBC/Al Jazeera verified semifinal result, 14 Jul 2026",
+  },
+  {
+    id: "102",
+    type: "sf",
+    group: "SF",
+    matchday: 7,
+    kickoff: "2026-07-15T19:00:00Z",
+    homeCode: "ENG",
+    awayCode: "ARG",
+    homeScore: null,
+    awayScore: null,
+    finished: false,
+    stadiumId: "7",
+    source: "FIFA match centre semifinal fixture, 15 Jul 2026",
+  },
+  {
+    id: "104",
+    type: "final",
+    group: "FINAL",
+    matchday: 9,
+    kickoff: "2026-07-19T19:00:00Z",
+    homeCode: "ESP",
+    awayCode: "TBD",
+    homeScore: null,
+    awayScore: null,
+    finished: false,
+    stadiumId: "11",
+    source: "Winner of semifinal 101 advanced to the final",
+  },
+];
+
+const TBD_TEAM: WCTeam = {
+  id: "tbd",
+  name_en: "TBD",
+  flag: "",
+  fifa_code: "TBD",
+  iso2: "",
+  groups: "",
+};
 
 interface Cache {
   matches?: WCMatch[];
@@ -83,6 +153,7 @@ export async function getWCData(): Promise<{ matches: WCMatch[]; teams: WCTeam[]
     loadJSON<WCStadium[]>("football.stadiums.json").catch(() => [] as WCStadium[]),
   ]);
   const teamById = new Map(teamsRaw.map((t) => [t.id, t]));
+  const teamByCode = new Map(teamsRaw.map((t) => [t.fifa_code, t]));
   const stadiumById = new Map(stadiumsRaw.map((s) => [s.id, s]));
   const matches: WCMatch[] = matchesRaw
     .map((m) => {
@@ -106,6 +177,33 @@ export async function getWCData(): Promise<{ matches: WCMatch[]; teams: WCTeam[]
     })
     .filter((x): x is WCMatch => !!x)
     .sort((a, b) => a.kickoff.getTime() - b.kickoff.getTime());
+
+  const byId = new Map(matches.map((m) => [m.id, m]));
+  for (const verified of VERIFIED_RESULTS) {
+    const home = verified.homeCode === "TBD" ? TBD_TEAM : teamByCode.get(verified.homeCode);
+    const away = verified.awayCode === "TBD" ? TBD_TEAM : teamByCode.get(verified.awayCode);
+    if (!home || !away) continue;
+    const existing = byId.get(verified.id);
+    const patched: WCMatch = {
+      id: verified.id,
+      kickoff: new Date(verified.kickoff),
+      group: verified.group,
+      matchday: verified.matchday,
+      type: verified.type,
+      finished: verified.finished,
+      home,
+      away,
+      homeScore: verified.homeScore,
+      awayScore: verified.awayScore,
+      stadium: stadiumById.get(verified.stadiumId ?? "") ?? existing?.stadium,
+      label: `${home.name_en} vs ${away.name_en}`,
+      source: verified.source,
+    };
+    if (existing) Object.assign(existing, patched);
+    else matches.push(patched);
+  }
+
+  matches.sort((a, b) => a.kickoff.getTime() - b.kickoff.getTime());
 
   CACHE.matches = matches;
   CACHE.teams = teamsRaw;
