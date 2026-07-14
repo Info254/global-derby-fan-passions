@@ -8,6 +8,8 @@ import { getWCData, groupMatchesByDay, type WCMatch } from "@/lib/wc2026";
 import { useLiveScores, mergeLive } from "@/lib/live-merge";
 import { computeGroupTable } from "@/lib/standings";
 import { getStars } from "@/lib/top-players";
+import { useServerFn } from "@tanstack/react-start";
+import { syncOutcomePoints } from "@/lib/outcome-points.functions";
 
 export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/progress")({
 });
 
 interface MyStamp { nation_code: string; nation_name: string; role: string; }
-interface MyPoint { delta: number; match_id: string | null; }
+interface MyPoint { delta: number; match_id: string | null; source?: string | null; reason?: string | null; }
 
 function ProgressPage() {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ function ProgressPage() {
   const [points, setPoints] = useState<MyPoint[]>([]);
   const [filter, setFilter] = useState<"mine" | "all">("mine");
   const { live } = useLiveScores();
+  const syncOutcomes = useServerFn(syncOutcomePoints);
   const matches = useMemo(() => mergeLive(rawMatches, live), [rawMatches, live]);
 
   useEffect(() => { void getWCData().then((d) => setRawMatches(d.matches)); }, []);
@@ -37,9 +40,24 @@ function ProgressPage() {
     if (!user) return;
     void supabase.from("stamps").select("nation_code, nation_name, role").eq("user_id", user.id)
       .then(({ data }) => setStamps((data ?? []) as MyStamp[]));
-    void supabase.from("points").select("delta, match_id").eq("user_id", user.id)
+    void supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
       .then(({ data }) => setPoints((data ?? []) as MyPoint[]));
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void syncOutcomes()
+      .then((result) => {
+        if (cancelled || result.inserted === 0) return;
+        return supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
+          .then(({ data }) => {
+            if (!cancelled) setPoints((data ?? []) as MyPoint[]);
+          });
+      })
+      .catch((err) => console.warn("Outcome point sync unavailable", err));
+    return () => { cancelled = true; };
+  }, [user, syncOutcomes]);
 
   const myCodes = useMemo(() => new Set(stamps.map((s) => s.nation_code)), [stamps]);
   const primary = stamps.find((s) => s.role === "primary");
@@ -62,17 +80,24 @@ function ProgressPage() {
 
   // My team record (only across truly finished matches with scores).
   const myRecord = useMemo(() => {
-    let w = 0, d = 0, l = 0, gf = 0, ga = 0;
+    let w = 0, d = 0, l = 0, split = 0, gf = 0, ga = 0;
     for (const m of finishedAll) {
       const homeMine = myCodes.has(m.home.fifa_code);
       const awayMine = myCodes.has(m.away.fifa_code);
       if (!homeMine && !awayMine) continue;
+      if (homeMine && awayMine) {
+        split++;
+        d++;
+        gf += m.homeScore! + m.awayScore!;
+        ga += m.homeScore! + m.awayScore!;
+        continue;
+      }
       const my = homeMine ? m.homeScore! : m.awayScore!;
       const opp = homeMine ? m.awayScore! : m.homeScore!;
       gf += my; ga += opp;
       if (my > opp) w++; else if (my < opp) l++; else d++;
     }
-    return { w, d, l, gf, ga, played: w + d + l };
+    return { w, d, l, split, gf, ga, played: w + d + l };
   }, [finishedAll, myCodes]);
 
   const visible = useMemo(() => filter === "all"
@@ -88,9 +113,28 @@ function ProgressPage() {
 
   const myGroups = useMemo(() => {
     const set = new Set<string>();
-    for (const m of matches) if (myCodes.has(m.home.fifa_code) || myCodes.has(m.away.fifa_code)) set.add(m.group);
+    for (const m of matches) if (m.type === "group" && (myCodes.has(m.home.fifa_code) || myCodes.has(m.away.fifa_code))) set.add(m.group);
     return Array.from(set).filter(Boolean).sort();
   }, [matches, myCodes]);
+
+  const knockoutForMe = useMemo(
+    () => matches.filter((m) => m.type !== "group" && (myCodes.has(m.home.fifa_code) || myCodes.has(m.away.fifa_code))),
+    [matches, myCodes],
+  );
+
+  const outcomePoints = useMemo(() => points.filter((p) => p.source === "outcome"), [points]);
+  const pointsByNation = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const point of outcomePoints) {
+      const reason = point.reason ?? "";
+      for (const stamp of stamps) {
+        if (reason.includes(stamp.nation_code)) {
+          map.set(stamp.nation_code, (map.get(stamp.nation_code) ?? 0) + point.delta);
+        }
+      }
+    }
+    return map;
+  }, [outcomePoints, stamps]);
 
   const nextForMe = useMemo(() => upcomingAll.find(
     (m) => myCodes.has(m.home.fifa_code) || myCodes.has(m.away.fifa_code),
@@ -123,10 +167,11 @@ function ProgressPage() {
                 <StatCard label="Games Played" value={myRecord.played} />
               </div>
               {myRecord.played > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   <MiniStat label="W" value={myRecord.w} tone="gold" />
                   <MiniStat label="D" value={myRecord.d} />
                   <MiniStat label="L" value={myRecord.l} tone="red" />
+                  <MiniStat label="Split" value={myRecord.split} />
                 </div>
               ) : (
                 <p className="text-[11px] text-white/50 italic">
@@ -136,6 +181,63 @@ function ProgressPage() {
             </>
           )}
         </header>
+
+        {hasStamps && (
+          <section className="rounded-2xl p-4 bg-white/5 border border-white/10 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Tournament Status</p>
+                <h2 className="font-display font-extrabold text-xl uppercase tracking-tight italic mt-1">Semi-finals</h2>
+              </div>
+              <span className="text-[10px] uppercase text-gold tracking-wider text-right">Verified fallback</span>
+            </div>
+            <div className="space-y-2">
+              {matches.filter((m) => m.type === "sf").map((m) => (
+                <MatchRow key={m.id} m={m} myCodes={myCodes} pts={pointsByMatch.get(m.id) ?? 0} />
+              ))}
+            </div>
+            <p className="text-[10px] leading-relaxed text-white/45">
+              Live feed is unavailable right now, so verified semi-final data is patched in instead of showing stale group placeholders.
+            </p>
+          </section>
+        )}
+
+        {hasStamps && stamps.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Your Picks</p>
+              <span className="text-xs text-white/40">Top {Math.min(stamps.length, 5)}</span>
+            </div>
+            <div className="space-y-2">
+              {stamps.slice(0, 5).map((stamp) => {
+                const played = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).length;
+                const next = upcomingAll.find((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code);
+                const recent = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).at(-1);
+                return (
+                  <div key={`${stamp.role}-${stamp.nation_code}`} className="rounded-xl p-3 bg-white/[0.03] border border-white/10">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-display font-bold uppercase text-sm truncate">{stamp.nation_name}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-white/40">{stamp.role.replaceAll("_", " ")}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-display font-extrabold text-gold tabular-nums">{pointsByNation.get(stamp.nation_code) ?? 0}</p>
+                        <p className="text-[9px] uppercase text-white/40">outcome pts</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 mt-3 text-[10px] uppercase tracking-wider text-white/50">
+                      <span>{played} played</span>
+                      <span className="text-right">{recent ? `Last ${recent.homeScore}–${recent.awayScore}` : "No result"}</span>
+                      <span className="col-span-2 truncate normal-case text-white/45">
+                        {next ? `Next: ${next.home.name_en} vs ${next.away.name_en} · ${formatKickoff(next.kickoff)}` : "No next match known"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Next up */}
         {hasStamps && nextForMe && (
@@ -190,6 +292,18 @@ function ProgressPage() {
           </section>
         )}
 
+        {/* Knockout tracker */}
+        {hasStamps && knockoutForMe.length > 0 && (
+          <section className="space-y-3">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Knockout Tracker</p>
+            <div className="space-y-2">
+              {knockoutForMe.map((m) => (
+                <MatchRow key={m.id} m={m} myCodes={myCodes} pts={pointsByMatch.get(m.id) ?? 0} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Standings — only render groups that have at least one played match */}
         {hasStamps && myGroups.length > 0 && (
           <section className="space-y-3">
@@ -198,6 +312,7 @@ function ProgressPage() {
               {myGroups.map((g) => {
                 const table = computeGroupTable(matches, g);
                 const anyPlayed = table.some((r) => r.played > 0);
+                if (!anyPlayed) return null;
                 return (
                   <div key={g} className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
                     <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center justify-between">

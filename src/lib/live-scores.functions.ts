@@ -13,7 +13,7 @@ export interface LiveFixture {
 }
 
 let CACHE: { ts: number; data: LiveFixture[] } | null = null;
-const TTL = 24 * 60 * 60 * 1000; // 24h
+const TTL = 5 * 60 * 1000; // keep live knockout matches fresh without hammering the API
 
 export const getLiveScores = createServerFn({ method: "GET" }).handler(
   async (): Promise<LiveFixture[]> => {
