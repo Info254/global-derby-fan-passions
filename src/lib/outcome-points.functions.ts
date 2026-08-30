@@ -14,6 +14,27 @@ export const syncOutcomePoints = createServerFn({ method: "POST" })
         homeScore: 0,
         awayScore: 2,
       },
+      {
+        matchId: "102",
+        homeCode: "ENG",
+        awayCode: "ARG",
+        homeScore: 1,
+        awayScore: 2,
+      },
+      {
+        matchId: "103",
+        homeCode: "FRA",
+        awayCode: "ENG",
+        homeScore: 4,
+        awayScore: 6,
+      },
+      {
+        matchId: "104",
+        homeCode: "ESP",
+        awayCode: "ARG",
+        homeScore: 1,
+        awayScore: 0,
+      },
     ];
 
     const { data: stamps } = await supabase

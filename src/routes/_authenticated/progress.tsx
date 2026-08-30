@@ -187,17 +187,17 @@ function ProgressPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Tournament Status</p>
-                <h2 className="font-display font-extrabold text-xl uppercase tracking-tight italic mt-1">Semi-finals</h2>
+                <h2 className="font-display font-extrabold text-xl uppercase tracking-tight italic mt-1">Spain are champions</h2>
               </div>
-              <span className="text-[10px] uppercase text-gold tracking-wider text-right">Verified fallback</span>
+              <span className="text-[10px] uppercase text-gold tracking-wider text-right">Tournament complete</span>
             </div>
             <div className="space-y-2">
-              {matches.filter((m) => m.type === "sf").map((m) => (
+              {matches.filter((m) => ["sf", "third", "final"].includes(m.type)).map((m) => (
                 <MatchRow key={m.id} m={m} myCodes={myCodes} pts={pointsByMatch.get(m.id) ?? 0} />
               ))}
             </div>
             <p className="text-[10px] leading-relaxed text-white/45">
-              Live feed is unavailable right now, so verified semi-final data is patched in instead of showing stale group placeholders.
+              Final-stage results are verified against FIFA and retained locally if the daily live feed is unavailable.
             </p>
           </section>
         )}
