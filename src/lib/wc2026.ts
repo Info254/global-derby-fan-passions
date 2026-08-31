@@ -158,7 +158,7 @@ export async function getWCData(): Promise<WCData> {
   CACHE.teams = teamsRaw;
   CACHE.stadiums = stadiumsRaw;
   CACHE.ts = Date.now();
-  return { matches, teams: teamsRaw, stadiums: stadiumsRaw };
+  return { matches, teams: teamsRaw, stadiums: stadiumsRaw, fetchedAt: CACHE.ts };
 }
 
 export function groupMatchesByDay(matches: WCMatch[]): Map<string, WCMatch[]> {
