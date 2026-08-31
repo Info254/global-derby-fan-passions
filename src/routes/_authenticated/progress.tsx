@@ -52,15 +52,20 @@ function ProgressPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    setSyncState("syncing");
     void syncOutcomes()
       .then((result) => {
-        if (cancelled || result.inserted === 0) return;
+        if (cancelled) return;
+        if (result.inserted === 0) { setSyncState("done"); return; }
         return supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
           .then(({ data }) => {
-            if (!cancelled) setPoints((data ?? []) as MyPoint[]);
+            if (!cancelled) { setPoints((data ?? []) as MyPoint[]); setSyncState("done"); }
           });
       })
-      .catch((err) => console.warn("Outcome point sync unavailable", err));
+      .catch((err) => {
+        console.warn("Outcome point sync unavailable", err);
+        if (!cancelled) setSyncState("idle");
+      });
     return () => { cancelled = true; };
   }, [user, syncOutcomes]);
 
