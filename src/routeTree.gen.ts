@@ -20,6 +20,7 @@ import { Route as AuthenticatedPassportRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedMatchdayRouteImport } from './routes/_authenticated/matchday'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedCirclesRouteImport } from './routes/_authenticated/circles'
+import { Route as ApiPublicBackfillResultsRouteImport } from './routes/api/public/backfill-results'
 
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
@@ -76,6 +77,12 @@ const AuthenticatedCirclesRoute = AuthenticatedCirclesRouteImport.update({
   path: '/circles',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicBackfillResultsRoute =
+  ApiPublicBackfillResultsRouteImport.update({
+    id: '/api/public/backfill-results',
+    path: '/api/public/backfill-results',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/passport': typeof AuthenticatedPassportRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
+  '/api/public/backfill-results': typeof ApiPublicBackfillResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesByTo {
   '/passport': typeof AuthenticatedPassportRoute
   '/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
+  '/api/public/backfill-results': typeof ApiPublicBackfillResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/passport': typeof AuthenticatedPassportRoute
   '/_authenticated/progress': typeof AuthenticatedProgressRoute
   '/nations/$code': typeof NationsCodeRoute
+  '/api/public/backfill-results': typeof ApiPublicBackfillResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/passport'
     | '/progress'
     | '/nations/$code'
+    | '/api/public/backfill-results'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/passport'
     | '/progress'
     | '/nations/$code'
+    | '/api/public/backfill-results'
   id:
     | '__root__'
     | '/'
@@ -153,6 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/passport'
     | '/_authenticated/progress'
     | '/nations/$code'
+    | '/api/public/backfill-results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +174,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   NationsRoute: typeof NationsRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
+  ApiPublicBackfillResultsRoute: typeof ApiPublicBackfillResultsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -242,6 +256,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCirclesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/backfill-results': {
+      id: '/api/public/backfill-results'
+      path: '/api/public/backfill-results'
+      fullPath: '/api/public/backfill-results'
+      preLoaderRoute: typeof ApiPublicBackfillResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -281,6 +302,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   NationsRoute: NationsRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
+  ApiPublicBackfillResultsRoute: ApiPublicBackfillResultsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
