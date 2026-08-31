@@ -51,78 +51,8 @@ export interface WCMatch {
   source?: string;
 }
 
-interface VerifiedResult {
-  id: string;
-  type: string;
-  group: string;
-  matchday: number;
-  kickoff: string;
-  homeCode: string;
-  awayCode: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  finished: boolean;
-  stadiumId?: string;
-  source: string;
-}
+// Verified results come from the single shared source of truth.
 
-const VERIFIED_RESULTS: VerifiedResult[] = [
-  {
-    id: "101",
-    type: "sf",
-    group: "SF",
-    matchday: 7,
-    kickoff: "2026-07-14T21:00:00Z",
-    homeCode: "FRA",
-    awayCode: "ESP",
-    homeScore: 0,
-    awayScore: 2,
-    finished: true,
-    stadiumId: "4",
-    source: "ESPN/BBC/Al Jazeera verified semifinal result, 14 Jul 2026",
-  },
-  {
-    id: "102",
-    type: "sf",
-    group: "SF",
-    matchday: 7,
-    kickoff: "2026-07-15T19:00:00Z",
-    homeCode: "ENG",
-    awayCode: "ARG",
-    homeScore: 1,
-    awayScore: 2,
-    finished: true,
-    stadiumId: "7",
-    source: "FIFA verified semifinal result, 15 Jul 2026",
-  },
-  {
-    id: "103",
-    type: "third",
-    group: "THIRD",
-    matchday: 8,
-    kickoff: "2026-07-18T22:00:00Z",
-    homeCode: "FRA",
-    awayCode: "ENG",
-    homeScore: 4,
-    awayScore: 6,
-    finished: true,
-    source: "FIFA verified third-place result, 18 Jul 2026",
-  },
-  {
-    id: "104",
-    type: "final",
-    group: "FINAL",
-    matchday: 9,
-    kickoff: "2026-07-19T19:00:00Z",
-    homeCode: "ESP",
-    awayCode: "ARG",
-    homeScore: 1,
-    awayScore: 0,
-    finished: true,
-    stadiumId: "11",
-    source: "FIFA verified final result, 19 Jul 2026 — Spain champions after extra time",
-  },
-];
 
 const TBD_TEAM: WCTeam = {
   id: "tbd",
