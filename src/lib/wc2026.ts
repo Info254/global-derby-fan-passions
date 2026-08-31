@@ -2,6 +2,10 @@
 // Source: https://github.com/rezarahiminia/worldcup2026 (ISC license).
 // We fetch raw JSON files from GitHub — no API key required.
 
+import { VERIFIED_RESULTS, RESULTS_UPDATED_AT, RESULTS_SOURCE } from "./verified-results";
+
+export { RESULTS_UPDATED_AT, RESULTS_SOURCE };
+
 const BASE = "https://raw.githubusercontent.com/rezarahiminia/worldcup2026/main";
 
 export interface WCTeam {
@@ -51,78 +55,8 @@ export interface WCMatch {
   source?: string;
 }
 
-interface VerifiedResult {
-  id: string;
-  type: string;
-  group: string;
-  matchday: number;
-  kickoff: string;
-  homeCode: string;
-  awayCode: string;
-  homeScore: number | null;
-  awayScore: number | null;
-  finished: boolean;
-  stadiumId?: string;
-  source: string;
-}
+// Verified results come from the single shared source of truth.
 
-const VERIFIED_RESULTS: VerifiedResult[] = [
-  {
-    id: "101",
-    type: "sf",
-    group: "SF",
-    matchday: 7,
-    kickoff: "2026-07-14T21:00:00Z",
-    homeCode: "FRA",
-    awayCode: "ESP",
-    homeScore: 0,
-    awayScore: 2,
-    finished: true,
-    stadiumId: "4",
-    source: "ESPN/BBC/Al Jazeera verified semifinal result, 14 Jul 2026",
-  },
-  {
-    id: "102",
-    type: "sf",
-    group: "SF",
-    matchday: 7,
-    kickoff: "2026-07-15T19:00:00Z",
-    homeCode: "ENG",
-    awayCode: "ARG",
-    homeScore: 1,
-    awayScore: 2,
-    finished: true,
-    stadiumId: "7",
-    source: "FIFA verified semifinal result, 15 Jul 2026",
-  },
-  {
-    id: "103",
-    type: "third",
-    group: "THIRD",
-    matchday: 8,
-    kickoff: "2026-07-18T22:00:00Z",
-    homeCode: "FRA",
-    awayCode: "ENG",
-    homeScore: 4,
-    awayScore: 6,
-    finished: true,
-    source: "FIFA verified third-place result, 18 Jul 2026",
-  },
-  {
-    id: "104",
-    type: "final",
-    group: "FINAL",
-    matchday: 9,
-    kickoff: "2026-07-19T19:00:00Z",
-    homeCode: "ESP",
-    awayCode: "ARG",
-    homeScore: 1,
-    awayScore: 0,
-    finished: true,
-    stadiumId: "11",
-    source: "FIFA verified final result, 19 Jul 2026 — Spain champions after extra time",
-  },
-];
 
 const TBD_TEAM: WCTeam = {
   id: "tbd",
@@ -156,9 +90,11 @@ async function loadJSON<T>(file: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function getWCData(): Promise<{ matches: WCMatch[]; teams: WCTeam[]; stadiums: WCStadium[] }> {
+export interface WCData { matches: WCMatch[]; teams: WCTeam[]; stadiums: WCStadium[]; fetchedAt: number }
+
+export async function getWCData(): Promise<WCData> {
   if (CACHE.matches && CACHE.ts && Date.now() - CACHE.ts < TTL) {
-    return { matches: CACHE.matches, teams: CACHE.teams!, stadiums: CACHE.stadiums! };
+    return { matches: CACHE.matches, teams: CACHE.teams!, stadiums: CACHE.stadiums!, fetchedAt: CACHE.ts };
   }
   const [teamsRaw, matchesRaw, stadiumsRaw] = await Promise.all([
     loadJSON<WCTeam[]>("football.teams.json"),
@@ -222,7 +158,7 @@ export async function getWCData(): Promise<{ matches: WCMatch[]; teams: WCTeam[]
   CACHE.teams = teamsRaw;
   CACHE.stadiums = stadiumsRaw;
   CACHE.ts = Date.now();
-  return { matches, teams: teamsRaw, stadiums: stadiumsRaw };
+  return { matches, teams: teamsRaw, stadiums: stadiumsRaw, fetchedAt: CACHE.ts };
 }
 
 export function groupMatchesByDay(matches: WCMatch[]): Map<string, WCMatch[]> {

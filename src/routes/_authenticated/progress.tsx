@@ -5,6 +5,7 @@ import { Flag } from "@/components/Flag";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getWCData, groupMatchesByDay, type WCMatch } from "@/lib/wc2026";
+import { RESULTS_SOURCE, RESULTS_UPDATED_AT } from "@/lib/verified-results";
 import { useLiveScores, mergeLive } from "@/lib/live-merge";
 import { computeGroupTable } from "@/lib/standings";
 import { getStars } from "@/lib/top-players";
@@ -30,11 +31,15 @@ function ProgressPage() {
   const [stamps, setStamps] = useState<MyStamp[]>([]);
   const [points, setPoints] = useState<MyPoint[]>([]);
   const [filter, setFilter] = useState<"mine" | "all">("mine");
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  const [syncState, setSyncState] = useState<"idle" | "syncing" | "done">("syncing");
   const { live } = useLiveScores();
   const syncOutcomes = useServerFn(syncOutcomePoints);
   const matches = useMemo(() => mergeLive(rawMatches, live), [rawMatches, live]);
 
-  useEffect(() => { void getWCData().then((d) => setRawMatches(d.matches)); }, []);
+  useEffect(() => {
+    void getWCData().then((d) => { setRawMatches(d.matches); setFetchedAt(d.fetchedAt); });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -47,15 +52,20 @@ function ProgressPage() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
+    setSyncState("syncing");
     void syncOutcomes()
       .then((result) => {
-        if (cancelled || result.inserted === 0) return;
+        if (cancelled) return;
+        if (result.inserted === 0) { setSyncState("done"); return; }
         return supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
           .then(({ data }) => {
-            if (!cancelled) setPoints((data ?? []) as MyPoint[]);
+            if (!cancelled) { setPoints((data ?? []) as MyPoint[]); setSyncState("done"); }
           });
       })
-      .catch((err) => console.warn("Outcome point sync unavailable", err));
+      .catch((err) => {
+        console.warn("Outcome point sync unavailable", err);
+        if (!cancelled) setSyncState("idle");
+      });
     return () => { cancelled = true; };
   }, [user, syncOutcomes]);
 
@@ -181,6 +191,10 @@ function ProgressPage() {
             </>
           )}
         </header>
+
+        <FreshnessBar fetchedAt={fetchedAt} syncState={syncState} liveCount={live.length} />
+
+
 
         {hasStamps && (
           <section className="rounded-2xl p-4 bg-white/5 border border-white/10 space-y-3">
@@ -441,6 +455,49 @@ function formatTime(d: Date): string {
 }
 function formatKickoff(d: Date): string {
   return d.toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function relativeTime(ts: number): string {
+  const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
+
+function FreshnessBar({
+  fetchedAt,
+  syncState,
+  liveCount,
+}: {
+  fetchedAt: number | null;
+  syncState: "idle" | "syncing" | "done";
+  liveCount: number;
+}) {
+  const verified = new Date(RESULTS_UPDATED_AT);
+  return (
+    <section className="rounded-2xl px-4 py-3 bg-white/[0.04] border border-white/10 space-y-1.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2 w-2 rounded-full ${syncState === "syncing" ? "bg-gold animate-pulse" : "bg-emerald-400"}`}
+          />
+          <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-white/70">
+            {syncState === "syncing" ? "Syncing results" : "Results up to date"}
+          </p>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-white/40 tabular-nums">
+          {fetchedAt ? relativeTime(fetchedAt) : "loading…"}
+        </span>
+      </div>
+      <p className="text-[10px] leading-relaxed text-white/45">
+        Verified {verified.toLocaleDateString(undefined, { day: "numeric", month: "short" })} ·{" "}
+        {RESULTS_SOURCE}
+        {liveCount > 0 ? ` · ${liveCount} fixtures from the live feed` : " · live feed idle"}
+      </p>
+    </section>
+  );
 }
 
 function StatCard({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
