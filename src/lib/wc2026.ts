@@ -90,9 +90,11 @@ async function loadJSON<T>(file: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function getWCData(): Promise<{ matches: WCMatch[]; teams: WCTeam[]; stadiums: WCStadium[] }> {
+export interface WCData { matches: WCMatch[]; teams: WCTeam[]; stadiums: WCStadium[]; fetchedAt: number }
+
+export async function getWCData(): Promise<WCData> {
   if (CACHE.matches && CACHE.ts && Date.now() - CACHE.ts < TTL) {
-    return { matches: CACHE.matches, teams: CACHE.teams!, stadiums: CACHE.stadiums! };
+    return { matches: CACHE.matches, teams: CACHE.teams!, stadiums: CACHE.stadiums!, fetchedAt: CACHE.ts };
   }
   const [teamsRaw, matchesRaw, stadiumsRaw] = await Promise.all([
     loadJSON<WCTeam[]>("football.teams.json"),
