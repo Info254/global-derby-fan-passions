@@ -2,6 +2,10 @@
 // Source: https://github.com/rezarahiminia/worldcup2026 (ISC license).
 // We fetch raw JSON files from GitHub — no API key required.
 
+import { VERIFIED_RESULTS, RESULTS_UPDATED_AT, RESULTS_SOURCE } from "./verified-results";
+
+export { RESULTS_UPDATED_AT, RESULTS_SOURCE };
+
 const BASE = "https://raw.githubusercontent.com/rezarahiminia/worldcup2026/main";
 
 export interface WCTeam {
