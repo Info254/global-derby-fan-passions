@@ -192,6 +192,10 @@ function ProgressPage() {
           )}
         </header>
 
+        <FreshnessBar fetchedAt={fetchedAt} syncState={syncState} liveCount={live.length} />
+
+
+
         {hasStamps && (
           <section className="rounded-2xl p-4 bg-white/5 border border-white/10 space-y-3">
             <div className="flex items-start justify-between gap-3">
