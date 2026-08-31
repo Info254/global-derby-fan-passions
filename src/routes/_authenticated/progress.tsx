@@ -31,11 +31,15 @@ function ProgressPage() {
   const [stamps, setStamps] = useState<MyStamp[]>([]);
   const [points, setPoints] = useState<MyPoint[]>([]);
   const [filter, setFilter] = useState<"mine" | "all">("mine");
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  const [syncState, setSyncState] = useState<"idle" | "syncing" | "done">("syncing");
   const { live } = useLiveScores();
   const syncOutcomes = useServerFn(syncOutcomePoints);
   const matches = useMemo(() => mergeLive(rawMatches, live), [rawMatches, live]);
 
-  useEffect(() => { void getWCData().then((d) => setRawMatches(d.matches)); }, []);
+  useEffect(() => {
+    void getWCData().then((d) => { setRawMatches(d.matches); setFetchedAt(d.fetchedAt); });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
