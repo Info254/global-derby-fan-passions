@@ -11,6 +11,7 @@ import { computeGroupTable } from "@/lib/standings";
 import { getStars } from "@/lib/top-players";
 import { useServerFn } from "@tanstack/react-start";
 import { syncOutcomePoints } from "@/lib/outcome-points.functions";
+import { ClubWatch } from "@/components/ClubWatch";
 
 export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/progress")({
   component: ProgressPage,
 });
 
-interface MyStamp { nation_code: string; nation_name: string; role: string; }
+interface MyStamp { nation_code: string; nation_name: string; role: string; competition?: string | null; }
 interface MyPoint { delta: number; match_id: string | null; source?: string | null; reason?: string | null; }
 
 function ProgressPage() {
@@ -43,7 +44,7 @@ function ProgressPage() {
 
   useEffect(() => {
     if (!user) return;
-    void supabase.from("stamps").select("nation_code, nation_name, role").eq("user_id", user.id)
+    void supabase.from("stamps").select("nation_code, nation_name, role, competition").eq("user_id", user.id)
       .then(({ data }) => setStamps((data ?? []) as MyStamp[]));
     void supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
       .then(({ data }) => setPoints((data ?? []) as MyPoint[]));
@@ -69,8 +70,16 @@ function ProgressPage() {
     return () => { cancelled = true; };
   }, [user, syncOutcomes]);
 
-  const myCodes = useMemo(() => new Set(stamps.map((s) => s.nation_code)), [stamps]);
-  const primary = stamps.find((s) => s.role === "primary");
+  const wcStamps = useMemo(
+    () => stamps.filter((s) => (s.competition ?? "WC2026") === "WC2026"),
+    [stamps],
+  );
+  const clubStamps = useMemo(
+    () => stamps.filter((s) => (s.competition ?? "WC2026") !== "WC2026"),
+    [stamps],
+  );
+  const myCodes = useMemo(() => new Set(wcStamps.map((s) => s.nation_code)), [wcStamps]);
+  const primary = wcStamps.find((s) => s.role === "primary");
   const totalPoints = points.reduce((a, p) => a + p.delta, 0);
   const pointsByMatch = useMemo(() => {
     const m = new Map<string, number>();
@@ -152,7 +161,7 @@ function ProgressPage() {
 
   const stars = primary ? getStars(primary.nation_code) : [];
 
-  const hasStamps = stamps.length > 0;
+  const hasStamps = wcStamps.length > 0 || clubStamps.length > 0;
   const tournamentLive = finishedAll.length > 0 || live.some((f) => ["1H","2H","HT","ET","P","LIVE"].includes(f.status));
 
   return (
@@ -194,6 +203,15 @@ function ProgressPage() {
 
         <FreshnessBar fetchedAt={fetchedAt} syncState={syncState} liveCount={live.length} />
 
+        <ClubWatch
+          stamps={clubStamps.map((s) => ({
+            role: s.role,
+            nation_code: s.nation_code,
+            nation_name: s.nation_name,
+            competition: s.competition ?? "WC2026",
+          }))}
+        />
+
 
 
         {hasStamps && (
@@ -216,14 +234,14 @@ function ProgressPage() {
           </section>
         )}
 
-        {hasStamps && stamps.length > 0 && (
+        {wcStamps.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-baseline justify-between">
               <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Your Picks</p>
-              <span className="text-xs text-white/40">Top {Math.min(stamps.length, 5)}</span>
+              <span className="text-xs text-white/40">Top {Math.min(wcStamps.length, 5)}</span>
             </div>
             <div className="space-y-2">
-              {stamps.slice(0, 5).map((stamp) => {
+              {wcStamps.slice(0, 5).map((stamp) => {
                 const played = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).length;
                 const next = upcomingAll.find((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code);
                 const recent = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).at(-1);
