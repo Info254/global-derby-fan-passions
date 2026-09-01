@@ -162,23 +162,34 @@ function PassportPage() {
 
   async function addStamp(e: React.FormEvent) {
     e.preventDefault();
-    const nation = NATIONS.find((n) => n.code === newNationCode);
-    if (!nation || !user) return;
+    if (!user) return;
+    const pick =
+      newCompetition === "WC2026"
+        ? NATIONS.find((n) => n.code === newNationCode)
+        : clubsFor(newCompetition).find((c) => c.code === newClubCode);
+    if (!pick) return;
     await supabase
       .from("stamps")
       .upsert(
-        { user_id: user.id, role: newRole, nation_code: nation.code, nation_name: nation.name },
-        { onConflict: "user_id,role" },
+        {
+          user_id: user.id,
+          role: newRole,
+          nation_code: pick.code,
+          nation_name: pick.name,
+          competition: newCompetition,
+        },
+        { onConflict: "user_id,role,competition" },
       );
-    if (newRole === "primary") {
+    if (newRole === "primary" && newCompetition === "WC2026") {
       await supabase
         .from("profiles")
-        .update({ primary_nation_code: nation.code, primary_nation_name: nation.name })
+        .update({ primary_nation_code: pick.code, primary_nation_name: pick.name })
         .eq("id", user.id);
     }
     setShowAdd(false);
     void refresh();
   }
+
 
   async function removeStamp(id: string, nationName: string) {
     const ok = window.confirm(
