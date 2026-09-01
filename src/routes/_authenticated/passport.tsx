@@ -4,6 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { NATIONS } from "@/lib/nations-data";
+import { COMPETITIONS, clubsFor, competitionById, type CompetitionId } from "@/lib/clubs";
+import { ClubWatch } from "@/components/ClubWatch";
 import { getWCData, type WCMatch } from "@/lib/wc2026";
 import { getPath, type PathInfo } from "@/lib/standings";
 import { RoadToCup } from "@/components/RoadToCup";
@@ -34,6 +36,7 @@ const ROLE_META: Record<StampRole, { label: string; color: string }> = {
 interface Stamp {
   id: string;
   role: StampRole;
+  competition: string;
   nation_code: string;
   nation_name: string;
   created_at: string;
@@ -68,6 +71,8 @@ function PassportPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newRole, setNewRole] = useState<StampRole>("primary");
   const [newNationCode, setNewNationCode] = useState<string>(NATIONS[0].code);
+  const [newCompetition, setNewCompetition] = useState<CompetitionId>("WC2026");
+  const [newClubCode, setNewClubCode] = useState<string>(clubsFor("EPL")[0].code);
   const [profileName, setProfileName] = useState<string>("");
   const [totalPoints, setTotalPoints] = useState<number>(0);
   const [pointRows, setPointRows] = useState<PointRow[]>([]);
@@ -122,7 +127,9 @@ function PassportPage() {
     setPointRows(rows);
     setTotalPoints(rows.reduce((a, r) => a + (r.delta ?? 0), 0));
 
-    const primary = (s.data ?? []).find((x) => x.role === "primary") as Stamp | undefined;
+    const primary = (s.data ?? []).find(
+      (x) => x.role === "primary" && (x.competition ?? "WC2026") === "WC2026",
+    ) as Stamp | undefined;
     setPrimaryStamp(primary ?? null);
     if (primary) {
       const { matches } = await getWCData();
@@ -374,6 +381,17 @@ function PassportPage() {
 
 
 
+        <ClubWatch
+          stamps={stamps
+            .filter((s) => (s.competition ?? "WC2026") !== "WC2026")
+            .map((s) => ({
+              role: s.role,
+              nation_code: s.nation_code,
+              nation_name: s.nation_name,
+              competition: s.competition,
+            }))}
+        />
+
         <div className="flex items-center justify-between">
           <h2 className="font-display font-bold uppercase tracking-tight">Allegiance Stamps</h2>
           <button
@@ -399,16 +417,42 @@ function PassportPage() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] uppercase text-white/40">Nation</label>
+              <label className="text-[10px] uppercase text-white/40">Competition</label>
               <select
-                value={newNationCode}
-                onChange={(e) => setNewNationCode(e.target.value)}
+                value={newCompetition}
+                onChange={(e) => setNewCompetition(e.target.value as CompetitionId)}
                 className="w-full bg-navy border border-white/10 rounded-lg px-3 py-2 mt-1 text-sm"
               >
-                {NATIONS.map((n) => (
-                  <option key={n.code} value={n.code}>{n.flag} {n.name}</option>
+                {COMPETITIONS.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="text-[10px] uppercase text-white/40">
+                {newCompetition === "WC2026" ? "Nation" : "Club"}
+              </label>
+              {newCompetition === "WC2026" ? (
+                <select
+                  value={newNationCode}
+                  onChange={(e) => setNewNationCode(e.target.value)}
+                  className="w-full bg-navy border border-white/10 rounded-lg px-3 py-2 mt-1 text-sm"
+                >
+                  {NATIONS.map((n) => (
+                    <option key={n.code} value={n.code}>{n.flag} {n.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <select
+                  value={newClubCode}
+                  onChange={(e) => setNewClubCode(e.target.value)}
+                  className="w-full bg-navy border border-white/10 rounded-lg px-3 py-2 mt-1 text-sm"
+                >
+                  {clubsFor(newCompetition).map((c) => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
             <button type="submit" className="w-full bg-gold text-navy font-display font-black py-2 rounded-lg uppercase tracking-tight text-sm">
               Stamp It
@@ -423,7 +467,9 @@ function PassportPage() {
           {stamps.map((s) => (
             <div key={s.id} className="bg-white/5 border border-white/10 rounded-xl p-5 flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase text-white/40">{ROLE_META[s.role].label}</p>
+                <p className="text-[10px] uppercase text-white/40">
+                  {competitionById(s.competition ?? "WC2026").short} · {ROLE_META[s.role].label}
+                </p>
                 <p className="font-display font-extrabold text-2xl uppercase tracking-tighter italic mt-1">
                   {s.nation_name}
                 </p>

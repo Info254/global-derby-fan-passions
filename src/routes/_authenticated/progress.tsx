@@ -43,7 +43,7 @@ function ProgressPage() {
 
   useEffect(() => {
     if (!user) return;
-    void supabase.from("stamps").select("nation_code, nation_name, role").eq("user_id", user.id)
+    void supabase.from("stamps").select("nation_code, nation_name, role, competition").eq("user_id", user.id)
       .then(({ data }) => setStamps((data ?? []) as MyStamp[]));
     void supabase.from("points").select("delta, match_id, source, reason").eq("user_id", user.id)
       .then(({ data }) => setPoints((data ?? []) as MyPoint[]));
