@@ -161,7 +161,7 @@ function ProgressPage() {
 
   const stars = primary ? getStars(primary.nation_code) : [];
 
-  const hasStamps = stamps.length > 0;
+  const hasStamps = wcStamps.length > 0 || clubStamps.length > 0;
   const tournamentLive = finishedAll.length > 0 || live.some((f) => ["1H","2H","HT","ET","P","LIVE"].includes(f.status));
 
   return (
@@ -234,14 +234,14 @@ function ProgressPage() {
           </section>
         )}
 
-        {hasStamps && stamps.length > 0 && (
+        {wcStamps.length > 0 && (
           <section className="space-y-3">
             <div className="flex items-baseline justify-between">
               <p className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold">Your Picks</p>
-              <span className="text-xs text-white/40">Top {Math.min(stamps.length, 5)}</span>
+              <span className="text-xs text-white/40">Top {Math.min(wcStamps.length, 5)}</span>
             </div>
             <div className="space-y-2">
-              {stamps.slice(0, 5).map((stamp) => {
+              {wcStamps.slice(0, 5).map((stamp) => {
                 const played = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).length;
                 const next = upcomingAll.find((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code);
                 const recent = finishedAll.filter((m) => m.home.fifa_code === stamp.nation_code || m.away.fifa_code === stamp.nation_code).at(-1);

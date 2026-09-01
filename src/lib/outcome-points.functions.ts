@@ -10,7 +10,8 @@ export const syncOutcomePoints = createServerFn({ method: "POST" })
     const { data: stamps } = await supabase
       .from("stamps")
       .select("role, nation_code")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("competition", "WC2026");
 
     if (!stamps?.length) return { inserted: 0, delta: 0 };
 
