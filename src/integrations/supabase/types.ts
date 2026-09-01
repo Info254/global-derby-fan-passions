@@ -66,6 +66,7 @@ export type Database = {
       }
       loyalty_history: {
         Row: {
+          competition: string
           created_at: string
           event: string
           id: string
@@ -77,6 +78,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          competition?: string
           created_at?: string
           event: string
           id?: string
@@ -88,6 +90,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          competition?: string
           created_at?: string
           event?: string
           id?: string
@@ -103,6 +106,7 @@ export type Database = {
       points: {
         Row: {
           circle_id: string | null
+          competition: string
           created_at: string
           delta: number
           id: string
@@ -113,6 +117,7 @@ export type Database = {
         }
         Insert: {
           circle_id?: string | null
+          competition?: string
           created_at?: string
           delta: number
           id?: string
@@ -123,6 +128,7 @@ export type Database = {
         }
         Update: {
           circle_id?: string | null
+          competition?: string
           created_at?: string
           delta?: number
           id?: string
@@ -297,6 +303,7 @@ export type Database = {
       }
       stamps: {
         Row: {
+          competition: string
           created_at: string
           id: string
           nation_code: string
@@ -306,6 +313,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          competition?: string
           created_at?: string
           id?: string
           nation_code: string
@@ -315,6 +323,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          competition?: string
           created_at?: string
           id?: string
           nation_code?: string
