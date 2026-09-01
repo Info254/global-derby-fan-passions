@@ -11,6 +11,7 @@ import { computeGroupTable } from "@/lib/standings";
 import { getStars } from "@/lib/top-players";
 import { useServerFn } from "@tanstack/react-start";
 import { syncOutcomePoints } from "@/lib/outcome-points.functions";
+import { ClubWatch } from "@/components/ClubWatch";
 
 export const Route = createFileRoute("/_authenticated/progress")({
   head: () => ({
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/progress")({
   component: ProgressPage,
 });
 
-interface MyStamp { nation_code: string; nation_name: string; role: string; }
+interface MyStamp { nation_code: string; nation_name: string; role: string; competition?: string | null; }
 interface MyPoint { delta: number; match_id: string | null; source?: string | null; reason?: string | null; }
 
 function ProgressPage() {
@@ -69,8 +70,16 @@ function ProgressPage() {
     return () => { cancelled = true; };
   }, [user, syncOutcomes]);
 
-  const myCodes = useMemo(() => new Set(stamps.map((s) => s.nation_code)), [stamps]);
-  const primary = stamps.find((s) => s.role === "primary");
+  const wcStamps = useMemo(
+    () => stamps.filter((s) => (s.competition ?? "WC2026") === "WC2026"),
+    [stamps],
+  );
+  const clubStamps = useMemo(
+    () => stamps.filter((s) => (s.competition ?? "WC2026") !== "WC2026"),
+    [stamps],
+  );
+  const myCodes = useMemo(() => new Set(wcStamps.map((s) => s.nation_code)), [wcStamps]);
+  const primary = wcStamps.find((s) => s.role === "primary");
   const totalPoints = points.reduce((a, p) => a + p.delta, 0);
   const pointsByMatch = useMemo(() => {
     const m = new Map<string, number>();
@@ -193,6 +202,15 @@ function ProgressPage() {
         </header>
 
         <FreshnessBar fetchedAt={fetchedAt} syncState={syncState} liveCount={live.length} />
+
+        <ClubWatch
+          stamps={clubStamps.map((s) => ({
+            role: s.role,
+            nation_code: s.nation_code,
+            nation_name: s.nation_name,
+            competition: s.competition ?? "WC2026",
+          }))}
+        />
 
 
 
